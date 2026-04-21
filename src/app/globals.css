@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brixel-primary: #f97316;
+  --color-brixel-dark: #0f172a;
+  --color-brixel-success: #22c55e;
+
+  /* Couleurs principales */
+  --color-app-primary: #1A1A2E;
+  --color-app-secondary: #3D3E50;
+  --color-app-accent: #E94560;
+  --color-app-surface: #F8F9FB;
+  --color-app-card: #FFFFFF;
+
+  /* Prix & disponibilité */
+  --color-app-price-green: #00897B;
+  --color-app-green-dark: #2E7D32;
+  --color-app-green-light: #E8F5E9;
+  --color-app-call-green: #00897B;
+
+  /* Statuts */
+  --color-app-status-open: #43A047;
+  --color-app-status-closed: #E53935;
+  --color-app-closed-light: #FFEBEE;
+  --color-app-closed-dark: #C62828;
+
+  /* Étoiles / notation */
+  --color-app-star-yellow: #FFB300;
+  --color-app-star-bg-warm: #FFF8E1;
+  --color-app-star-text-brown: #7B5800;
+
+  /* Icônes infos */
+  --color-app-info-phone: #00897B;
+  --color-app-info-ville: #1E88E5;
+  --color-app-info-quartier: #5E35B1;
+  --color-app-info-precision: #E53935;
+  --color-app-info-region: #43A047;
+
+  /* Textes */
+  --color-app-text-primary: #1A1A2E;
+  --color-app-text-secondary: #2D2D2D;
+  --color-app-text-muted: #444444;
+
+  /* Notifications */
+  --color-app-notif-success: #4CAF50;
+  --color-app-notif-warning: #FF9800;
+  --color-app-notif-error: #F44336;
+}
+
+/* ── Variables CSS Flutter synchronisées ────────────────────────────── */
+:root {
+  /* Couleurs principales */
+  --app-primary: #1A1A2E;
+  --app-secondary: #3D3E50;
+  --app-accent: #E94560;
+  --app-surface: #F8F9FB;
+  --app-card: #FFFFFF;
+
+  /* Prix & disponibilité */
+  --app-price-green: #00897B;
+  --app-green-dark: #2E7D32;
+  --app-green-light: #E8F5E9;
+  --app-call-green: #00897B;
+
+  /* Statuts */
+  --app-status-open: #43A047;
+  --app-status-closed: #E53935;
+  --app-closed-light: #FFEBEE;
+  --app-closed-dark: #C62828;
+
+  /* Étoiles / notation */
+  --app-star-yellow: #FFB300;
+  --app-star-bg-warm: #FFF8E1;
+  --app-star-text-brown: #7B5800;
+
+  /* Icônes infos */
+  --app-info-phone: #00897B;
+  --app-info-ville: #1E88E5;
+  --app-info-quartier: #5E35B1;
+  --app-info-precision: #E53935;
+  --app-info-region: #43A047;
+
+  /* Textes */
+  --app-text-primary: #1A1A2E;
+  --app-text-secondary: #2D2D2D;
+  --app-text-muted: #444444;
+
+  /* Notifications */
+  --app-notif-success: #4CAF50;
+  --app-notif-warning: #FF9800;
+  --app-notif-error: #F44336;
+}
