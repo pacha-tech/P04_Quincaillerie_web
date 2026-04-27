@@ -1,7 +1,8 @@
+"use client";
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { getMenuByRole } from '@/src/constant/menuConfig';
 import { UserRole } from '@/src/types/auth';
 import {
@@ -18,7 +19,14 @@ import {
   Store,
   Info,
   Mail,
+  LogOut,
+  ScrollText,
 } from 'lucide-react';
+import { LocationProvider } from '@/src/hooks/LocationContext';
+import { useAuth } from '@/src/hooks/AuthContext'; 
+import { useCart } from '@/src/hooks/CartContext'; 
+import LogoutModal from './LogoutModal';
+import { log } from 'console';
 
 const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string }>> = {
   grid: (props) => <BarChart2 {...props} />,
@@ -33,52 +41,53 @@ const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string }>> 
   home: (props) => <Home {...props} />,
   info: (props) => <Info {...props} />,
   mail: (props) => <Mail {...props} />,
-};
-
-const getRoleFromPath = (pathname: string): UserRole => {
-  if (pathname.startsWith('/authenticated/client')) return 'client';
-  if (pathname.startsWith('/authenticated/vendeur')) return 'vendeur';
-    return 'visiteur';
+  logOut: (props) => <LogOut {...props} />,
+  logs: (props) => <ScrollText {...props} />,
 };
 
 export default function SideBar() {
   const pathname = usePathname();
-  const role = getRoleFromPath(pathname || '/');
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [showLogoutModal , setShowLogoutModal] = useState(false);
+  
+  const { role , logout} = useAuth();
+  const { items } = useCart(); 
 
-  // Synchroniser l'état après le montage côté client
+  const activeRole = (role || "VISITEUR") as UserRole;
+  const menuItems = getMenuByRole(activeRole);
+
+  
+  const uniqueStoresCount = new Set(items.map(item => item.idQuincaillerie)).size;
+
   useEffect(() => {
     const isDesktop = window.innerWidth >= 768;
     setIsOpen(isDesktop);
-  }, []);
-
-  const menuItems = getMenuByRole(role);
+  }, [pathname]);
 
   const renderIcon = (iconName: string) => {
     const Icon = ICON_MAP[iconName];
     return Icon ? <Icon size={20} /> : <span>📌</span>;
   };
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
+  const handleLogout = () => {
+    setShowLogoutModal(false);
+    logout();
   };
 
-  const closeSidebar = () => {
-    setIsOpen(false);
-  };
+  const toggleSidebar = () => setIsOpen(!isOpen);
+  const closeSidebar = () => setIsOpen(false);
 
-
-  return (<>
-      {/* Hamburger Button (Mobile) */}
+  return (
+    <LocationProvider>
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-app-card border border-app-secondary/20 hover:bg-app-surface transition-colors"
         aria-label="Toggle sidebar"
       >
-        {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {isOpen ? <X size={24} className="text-app-primary" /> : <Menu size={24} className="text-app-primary" />}
       </button>
 
-      {/* Overlay (Mobile) */}
       {isOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-30 transition-opacity"
@@ -87,75 +96,89 @@ export default function SideBar() {
         />
       )}
 
-     <aside
-            className={`
-                fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200
-                flex flex-col shadow-lg transition-transform duration-300 ease-in-out
-                z-[60] 
-                ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-                md:translate-x-0
-            `}
+      <aside
+        className={`
+          fixed top-0 left-0 h-screen w-64 bg-app-card border-r border-app-secondary/20
+          flex flex-col shadow-lg transition-transform duration-300 ease-in-out
+          z-[60] 
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+          md:translate-x-0
+        `}
       >
         
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
-            BRIXEL
-          </h1>
-          <p className="text-xs text-gray-500 mt-1">v1.0</p>
+        <div className="p-6 border-b border-app-secondary/20">
+          <h1 className="text-2xl font-bold text-app-accent">BRIXEL</h1>
+          <p className="text-xs text-app-secondary mt-1">v1.0</p>
         </div>
 
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
+            const isLogout = item.id === 'logout';
             return (
               <Link
                 key={item.id}
-                href={item.href}
-                /*
-                onClick={() => {
-                    if (window.innerWidth < 768) closeSidebar();
+                href={isLogout ? '#' : item.href}
+                onClick={(e) => {
+                  if(isLogout){
+                    e.preventDefault();
+                    setShowLogoutModal(true);
+                  }
+                  if (window.innerWidth < 768) closeSidebar();
                 }}
-                    */
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
                   group cursor-pointer
                   ${
                     isActive
-                      ? 'bg-orange-50 text-orange-600 font-semibold shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-app-accent/10 text-app-accent font-semibold shadow-sm'
+                      : 'text-app-secondary hover:bg-app-surface hover:text-app-primary'
                   }
                 `}
               >
-                <span className="text-xl group-hover:scale-110 transition-transform duration-200">
+                <span className="relative text-xl group-hover:scale-110 transition-transform duration-200">
                   {renderIcon(item.icon)}
+                  
+                  {item.icon === 'shopping-cart' && uniqueStoresCount > 0 && (
+                    <span className="absolute -top-2 -right-2 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-app-card shadow-sm">
+                      {uniqueStoresCount}
+                    </span>
+                  )}
                 </span>
+
                 <span className="text-sm font-medium">{item.label}</span>
                 {isActive && (
-                  <div className="ml-auto w-1.5 h-6 bg-orange-600 rounded-full" />
+                  <div className="ml-auto w-1.5 h-6 bg-app-accent rounded-full" />
                 )}
               </Link>
             );
           })}
         </nav>
 
-        {/* User Info (Placeholder) */}
-        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+        {/* ... (Footer de la sidebar inchangé) ... */}
+        <div className="px-4 py-3 border-t border-app-secondary/20 bg-app-surface">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
-              {role.charAt(0).toUpperCase()}
+            <div className="w-8 h-8 bg-app-accent rounded-full flex items-center justify-center text-app-card text-sm font-bold uppercase">
+              {activeRole.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-900 capitalize">
-                {role}
+              <p className="text-xs font-semibold text-app-primary capitalize">
+                {activeRole}
               </p>
-              <p className="text-xs text-gray-500 truncate">
-                Mode développement
+              <p className="text-xs text-app-secondary truncate">
+                Connecté
               </p>
             </div>
           </div>
         </div>
       </aside>
-    </>
+      
+      <LogoutModal 
+        isOpen={showLogoutModal} 
+        onClose={() => setShowLogoutModal(false)} 
+        onConfirm={handleLogout} 
+      />
+    </LocationProvider>
   );
 }

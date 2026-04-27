@@ -1,4 +1,4 @@
-import {Price}  from './Price.service';
+import {Price}  from './Price';
 
 export interface ProductSearch {
   idProduct: string;

@@ -9,8 +9,9 @@ export default function LocationButton() {
   // Si on a déjà la position, on affiche un petit message de succès
   if (latitude) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 px-1 md:px-3 py-1.5 rounded-full border border-green-200">
-        <MapPin className=" block h-3 w-5 md:h-3" />
+      <div className="flex items-center gap-0 md:gap-1.5 text-xs text-green-600 bg-green-50 px-2 md:px-3 py-1.5 rounded-full border border-green-200">
+        <MapPin className="h-3 w-5 md:h-3" />
+        <span className=" md:hidden text-xs font-medium">Activé</span>
         <span className="hidden md:block text-xs font-medium">Position activée</span>
       </div>
     );

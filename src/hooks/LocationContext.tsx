@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, ReactNode , useEffect } from 'react';
 
 interface LocationState {
+  sortBy: string;
+  setSortBy: (sort: string) => void;
   latitude: number | null;
   longitude: number | null;
   error: string | null;
@@ -19,6 +21,9 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     error: null as string | null,
     loading: false,
   });
+
+
+  const [sortBy , setSortBy] = useState<string>('default');
 
   const requestLocation = () => {
     setLocation((prev) => ({ ...prev, loading: true, error: null }));
@@ -45,7 +50,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <LocationContext.Provider value={{ ...location, requestLocation }}>
+    <LocationContext.Provider value={{ ...location, requestLocation , sortBy , setSortBy}}>
       {children}
     </LocationContext.Provider>
   );

@@ -2,7 +2,7 @@
  * Types d'authentification et d'autorisation
  */
 
-export type UserRole = 'client' | 'vendeur' | 'visiteur';
+export type UserRole = 'CLIENT' | 'VENDEUR' | 'VISITEUR';
 
 export interface MenuItem {
   id: string;

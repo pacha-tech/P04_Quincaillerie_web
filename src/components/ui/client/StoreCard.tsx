@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { ArrowRight, Image as ImageIcon, MapPin } from 'lucide-react';
 import { calculateDistance } from '@/src/utils/Distance';
-import { Price } from '@/src/types/Price.service';
+import { Price } from '@/src/types/Price';
 import { ProductSearch } from '@/src/types/productSearch';
 
 export default function StoreCard({ store, product, userLocation }: { store: Price; product: ProductSearch; userLocation: { latitude: number | null; longitude: number | null } }) {
