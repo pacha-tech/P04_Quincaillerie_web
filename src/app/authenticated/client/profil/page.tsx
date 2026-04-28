@@ -9,7 +9,7 @@ export default function ProfilPage() {
           <User className="h-10 w-10 md:h-12 md:w-12" />
         </div>
         
-        <h1 className="text-2xl md:text-3xl font-bold text-app-primary mb-3">Mon Profil</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-app-primary mb-3">Mon Profil personnel</h1>
         <p className="text-sm md:text-base text-app-secondary mb-8">
           Votre espace personnel est en cours de préparation. Vous pourrez bientôt gérer vos informations, vos adresses et votre historique ici.
         </p>
