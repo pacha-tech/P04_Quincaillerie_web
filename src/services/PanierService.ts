@@ -87,7 +87,7 @@ class PanierService {
       return [];
     } catch (error) {
       this.handleError(error);
-      return []; // Requis par TypeScript en cas d'erreur non catchée (bien que handleError throw toujours)
+      return [];
     }
   }
 

@@ -57,7 +57,7 @@ export default function CartOverviewPage() {
         
         <div className="relative z-10">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 text-app-accent rounded-md text-xs font-bold uppercase tracking-wider mb-3">
-            <Sparkles className="w-3 h-3" /> Espace Commande
+            <Sparkles className="w-3 h-3" /> Espace Panier
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white leading-tight">
             Vos paniers en cours
@@ -80,7 +80,7 @@ export default function CartOverviewPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {Object.entries(groupedCarts).map(([idQuincaillerie, storeItems]) => {
           const storeName = storeItems[0]?.storeName.split(' ')[0] || "Boutique";
-          const totalQty = storeItems.reduce((sum, item) => sum + item.quantity, 0);
+          const totalQty = storeItems.length;
           const totalAmount = storeItems.reduce((sum, item) => {
             const price = item.inPromotion && item.pricePromo ? item.pricePromo : item.price;
             return sum + (price * item.quantity);

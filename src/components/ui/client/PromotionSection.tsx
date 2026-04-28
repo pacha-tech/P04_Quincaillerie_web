@@ -38,7 +38,7 @@ export default function PromotionsSection() {
     sessionStorage.setItem('brixel_preloaded_product', JSON.stringify(product));
     
     // 2. On navigue vers la page
-    router.push(`/authenticated/client/quincaillerie/${idQuincaillerie}/produits/${product.idProduct}`);
+    router.push(`/authenticated/client/quincaillerie/${idQuincaillerie}/prices/${product.priceSearchProductsDTO[0].idPrice}`);
   };
 
   const handleAddToCart = async (idPrice: string) => {

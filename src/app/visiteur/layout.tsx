@@ -3,11 +3,13 @@ import Link from "next/link";
 import { ShoppingCart, User } from "lucide-react";
 import { LocationProvider } from "@/src/hooks/LocationContext";
 import GuestGuard from "@/src/components/ui/GuestGuard";
+import { CartProvider } from "@/src/hooks/CartContext";
 
 export default function BoutiqueLayout({ children }: { children: React.ReactNode }) {
   return (
     // On met le fond de l'application en app-surface
-    <GuestGuard>
+    <CartProvider>
+      <GuestGuard>
       <div className="flex flex-col min-h-screen bg-app-surface">
         
         {/* Navbar Boutique */}
@@ -40,5 +42,6 @@ export default function BoutiqueLayout({ children }: { children: React.ReactNode
         </main>
       </div>  
     </GuestGuard>
+    </CartProvider>
   );
 }

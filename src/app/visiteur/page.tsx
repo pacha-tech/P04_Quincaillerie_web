@@ -1,6 +1,8 @@
 import React from 'react';
 import { ArrowRight, HardHat, Ruler, Construction, Truck , ImageIcon} from 'lucide-react';
 import Link from 'next/link';
+import PourVousSection from '@/src/components/ui/client/PourVous';
+import PromotionsSection from '@/src/components/ui/client/PromotionSection';
 
 export default function HomePage() {
   // Utilisation des couleurs exactes de ton fichier config (accent, ville, region, quartier)
@@ -83,6 +85,23 @@ export default function HomePage() {
             </div>
           ))};
         </div>
+        
+        {/*
+        <PourVousSection/>
+
+        <div className="bg-gradient-to-br from-app-accent via-app-secondary to-app-primary rounded-3xl p-6 md:p-8 text-app-card shadow-lg">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3">🔥 Promotion exceptionnelle</h2>
+                <p className="text-base md:text-lg mb-4 md:mb-6 opacity-90">Jusqu'à -30% sur les outils électriques ce mois-ci !</p>
+                <button className="bg-app-card text-app-accent px-6 py-2 md:px-8 md:py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95">Voir les offres</button>
+              </div>
+            <div className="hidden sm:flex h-24 w-24 md:h-32 md:w-32 items-center justify-center rounded-3xl bg-app-card/10 text-4xl md:text-5xl">⚡</div>
+          </div>
+        </div>
+        
+        <PromotionsSection />
+        */}
       </section>
     </div>
   );

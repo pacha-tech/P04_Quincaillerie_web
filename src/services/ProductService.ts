@@ -143,9 +143,9 @@ export const deleteProduct = async (idProduct: string): Promise<void> => {
   }
 };
 
-export const getProductById = async (productId: string): Promise<ProductSearch> => {
+export const getProductById = async (priceId: string): Promise<ProductSearch> => {
   try {
-    const response = await api.get(`/products/${productId}`);
+    const response = await api.get(`/products/getProduct/${priceId}`);
     return response.data;
   } catch (error) {
     handleApiError(error, "la récupération du produit");
