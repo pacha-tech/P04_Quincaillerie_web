@@ -2,33 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { getMenuByRole } from '@/src/constant/menuConfig';
 import { UserRole } from '@/src/types/auth';
 import {
-  Menu,
-  X,
-  Home,
-  ShoppingCart,
-  Heart,
-  User,
-  Settings,
-  Box,
-  TrendingUp,
-  BarChart2,
-  Store,
-  Info,
-  Mail,
-  LogOut,
-  ScrollText,
+  Menu, X, Home, ShoppingCart, Heart, User, Settings, Box,
+  TrendingUp, BarChart2, Store, Info, Mail, LogOut, ScrollText,
 } from 'lucide-react';
 import { LocationProvider } from '@/src/hooks/LocationContext';
 import { useAuth } from '@/src/hooks/AuthContext'; 
 import { useCart } from '@/src/hooks/CartContext'; 
 import LogoutModal from './LogoutModal';
-import { log } from 'console';
 
-const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string }>> = {
+const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string; strokeWidth?: number }>> = {
   grid: (props) => <BarChart2 {...props} />,
   'shopping-cart': (props) => <ShoppingCart {...props} />,
   heart: (props) => <Heart {...props} />,
@@ -47,16 +33,14 @@ const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string }>> 
 
 export default function SideBar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [showLogoutModal , setShowLogoutModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   
-  const { role , logout} = useAuth();
+  const { role, logout } = useAuth();
   const { items } = useCart(); 
 
   const activeRole = (role || "VISITEUR") as UserRole;
   const menuItems = getMenuByRole(activeRole);
-
   
   const uniqueStoresCount = new Set(items.map(item => item.idQuincaillerie)).size;
 
@@ -67,7 +51,7 @@ export default function SideBar() {
 
   const renderIcon = (iconName: string) => {
     const Icon = ICON_MAP[iconName];
-    return Icon ? <Icon size={20} /> : <span>📌</span>;
+    return Icon ? <Icon size={20} strokeWidth={2.5} /> : <span>📌</span>;
   };
 
   const handleLogout = () => {
@@ -82,15 +66,15 @@ export default function SideBar() {
     <LocationProvider>
       <button
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-app-card border border-app-secondary/20 hover:bg-app-surface transition-colors"
+        className="md:hidden fixed top-5 left-5 z-50 p-2.5 rounded-full bg-app-card/90 backdrop-blur-md shadow-sm border border-app-secondary/10 text-app-primary transition-transform active:scale-95"
         aria-label="Toggle sidebar"
       >
-        {isOpen ? <X size={24} className="text-app-primary" /> : <Menu size={24} className="text-app-primary" />}
+        {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30 transition-opacity"
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -98,45 +82,55 @@ export default function SideBar() {
 
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-app-card border-r border-app-secondary/20
-          flex flex-col shadow-lg transition-transform duration-300 ease-in-out
-          z-[60] 
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-          md:translate-x-0
+          fixed top-0 left-0 h-screen w-64 bg-app-card/80 backdrop-blur-2xl border-r border-app-secondary/10
+          flex flex-col transition-transform duration-300 ease-out z-[60] 
+          ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} 
+          md:translate-x-0 md:shadow-none
         `}
       >
         
-        <div className="p-6 border-b border-app-secondary/20">
-          <h1 className="text-2xl font-bold text-app-accent">BRIXEL</h1>
-          <p className="text-xs text-app-secondary mt-1">v1.0</p>
+        <div className="pt-8 pb-6 px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex flex-shrink-0 items-center justify-center w-10 h-10 rounded-xl bg-black text-white font-black text-lg shadow-lg shadow-black/10">
+              BX
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-app-primary flex items-center gap-2">
+              BRIXEL
+              <span className="text-[10px] font-bold bg-app-surface px-2 py-0.5 rounded-full text-app-secondary mt-1">v1.0</span>
+            </h1>
+          </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto scrollbar-hide">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             const isLogout = item.id === 'logout';
+            
             return (
               <Link
                 key={item.id}
                 href={isLogout ? '#' : item.href}
                 onClick={(e) => {
-                  if(isLogout){
+                  if (isLogout) {
                     e.preventDefault();
                     setShowLogoutModal(true);
                   }
                   if (window.innerWidth < 768) closeSidebar();
                 }}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
-                  group cursor-pointer
-                  ${
-                    isActive
-                      ? 'bg-app-accent/10 text-app-accent font-semibold shadow-sm'
-                      : 'text-app-secondary hover:bg-app-surface hover:text-app-primary'
+                  relative flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 group overflow-hidden
+                  ${isActive 
+                    ? 'bg-app-accent/10 text-app-accent font-bold' 
+                    : 'text-app-secondary font-medium hover:bg-app-surface/50 hover:text-app-primary'
                   }
+                  ${isLogout ? 'hover:bg-red-50 hover:text-red-600 mt-6' : ''}
                 `}
               >
+                {isActive && (
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-app-accent rounded-l-full shadow-sm" />
+                )}
+
+                {/* 👉 Ton code d'origine exact remis en place */}
                 <span className="relative text-xl group-hover:scale-110 transition-transform duration-200">
                   {renderIcon(item.icon)}
                   
@@ -147,28 +141,27 @@ export default function SideBar() {
                   )}
                 </span>
 
-                <span className="text-sm font-medium">{item.label}</span>
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-6 bg-app-accent rounded-full" />
-                )}
+                <span className="text-sm tracking-wide">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* ... (Footer de la sidebar inchangé) ... */}
-        <div className="px-4 py-3 border-t border-app-secondary/20 bg-app-surface">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-app-accent rounded-full flex items-center justify-center text-app-card text-sm font-bold uppercase">
+        <div className="p-4 mt-auto border-t border-app-surface/50">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-app-surface/30 transition-colors hover:bg-app-surface cursor-default">
+            <div className="w-9 h-9 bg-black rounded-full flex items-center justify-center text-white text-sm font-bold uppercase shadow-sm">
               {activeRole.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-app-primary capitalize">
+              <p className="text-sm font-bold text-app-primary capitalize truncate leading-tight">
                 {activeRole}
               </p>
-              <p className="text-xs text-app-secondary truncate">
-                Connecté
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <p className="text-[11px] font-medium text-app-secondary uppercase tracking-wider">
+                  En ligne
+                </p>
+              </div>
             </div>
           </div>
         </div>

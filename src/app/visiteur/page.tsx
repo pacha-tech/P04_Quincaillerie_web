@@ -1,56 +1,64 @@
 import React from 'react';
-import { ArrowRight, HardHat, Ruler, Construction, Truck , ImageIcon} from 'lucide-react';
+import { ArrowRight, HardHat, Ruler, Construction, Truck, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
-import PourVousSection from '@/src/components/ui/client/PourVous';
-import PromotionsSection from '@/src/components/ui/client/PromotionSection';
+// import PourVousSection from '@/src/components/ui/client/PourVous';
+// import PromotionsSection from '@/src/components/ui/client/PromotionSection';
 
 export default function HomePage() {
-  // Utilisation des couleurs exactes de ton fichier config (accent, ville, region, quartier)
-  // avec une opacité de 10% pour le fond (/10)
   const categories = [
-    { name: "Gros Œuvre", icon: <Construction />, count: "150+ articles", color: "bg-app-accent/10 text-app-accent" },
-    { name: "Électricité", icon: <HardHat />, count: "80+ articles", color: "bg-app-info-ville/10 text-app-info-ville" },
-    { name: "Plomberie", icon: <Ruler />, count: "120+ articles", color: "bg-app-info-region/10 text-app-info-region" },
-    { name: "Logistique", icon: <Truck />, count: "Services", color: "bg-app-info-quartier/10 text-app-info-quartier" },
+    { name: "Gros Œuvre", icon: <Construction className="h-6 w-6" />, count: "150+ articles", color: "text-app-accent bg-app-accent/10" },
+    { name: "Électricité", icon: <HardHat className="h-6 w-6" />, count: "80+ articles", color: "text-blue-500 bg-blue-500/10" },
+    { name: "Plomberie", icon: <Ruler className="h-6 w-6" />, count: "120+ articles", color: "text-teal-500 bg-teal-500/10" },
+    { name: "Logistique", icon: <Truck className="h-6 w-6" />, count: "Services", color: "text-purple-500 bg-purple-500/10" },
   ];
 
   return (
-    <div className="space-y-12 pb-20">
+    <div className="space-y-16 pb-24 max-w-7xl mx-auto font-sans selection:bg-app-accent/20">
 
-      {/* --- SECTION HERO (Bannière) --- */}
-      <section className="relative h-[400px] rounded-3xl overflow-hidden bg-app-primary flex items-center px-12 shadow-md">
-        <div className="relative z-10 max-w-lg space-y-6">
-          <h2 className="text-4xl md:text-5xl font-black text-white leading-tight">
-            Construisez votre futur avec <span className="text-app-accent">Brixel</span>
+      {/* --- SECTION HERO (Bannière Épurée) --- */}
+      <section className="relative h-[350px] md:h-[400px] w-full rounded-[2rem] md:rounded-[3rem] bg-app-card border border-app-primary/5 shadow-2xl shadow-app-primary/5 flex items-center overflow-hidden">
+        {/* Arrière-plan subtil et abstrait */}
+        <div className="absolute inset-0 bg-gradient-to-br from-app-surface to-app-card"></div>
+        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-app-accent/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute bottom-[-50px] left-[20%] w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 px-8 md:px-16 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-app-accent/10 border border-app-accent/20 mb-6">
+            <span className="h-1.5 w-1.5 rounded-full bg-app-accent animate-pulse"></span>
+            <span className="text-[10px] font-bold text-app-accent uppercase tracking-wider">Livraison express</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-app-primary leading-[1.1] tracking-tight mb-4">
+            Construisez votre futur avec <span className="text-transparent bg-clip-text bg-gradient-to-r from-app-accent to-blue-500">Brixel</span>
           </h2>
-          <p className="text-gray-300 text-lg">
-            Tous vos matériaux de construction au meilleur prix, livrés directement sur vos chantiers au Cameroun.
+          <p className="text-base md:text-lg text-app-secondary leading-relaxed mb-8">
+            Tous vos matériaux au meilleur prix, livrés directement sur vos chantiers.
           </p>
-          <button className="bg-app-accent hover:opacity-90 text-white px-8 py-3 rounded-full font-bold transition-all hover:scale-105 shadow-sm">
+          <button className="px-8 py-3.5 bg-app-primary text-white text-sm font-bold rounded-full hover:bg-black/80 transition-all shadow-md active:scale-95 inline-flex items-center gap-2">
             Explorer le catalogue
           </button>
         </div>
-        {/* Effet visuel de fond ajusté avec app-accent */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-app-accent/30 to-transparent hidden md:block pointer-events-none" />
       </section>
 
       {/* --- SECTION CATÉGORIES --- */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-app-text-primary">Nos catégories</h3>
-          <Link href="/categories" className="text-app-accent font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
-            Voir tout <ArrowRight size={18} />
+        <div className="flex items-end justify-between mb-8 px-2">
+          <div>
+            <h3 className="text-2xl font-black text-app-primary tracking-tight">Nos catégories</h3>
+            <p className="text-sm text-app-secondary mt-1">L'essentiel pour vos travaux</p>
+          </div>
+          <Link href="#" className="hidden sm:flex text-sm font-bold text-app-accent hover:text-app-primary transition-colors items-center gap-1">
+            Voir tout <ArrowRight size={16} />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {categories.map((cat, index) => (
-            <div key={index} className="p-6 bg-app-card border border-app-surface rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${cat.color} group-hover:scale-110 transition-transform`}>
+            <div key={index} className="bg-app-surface rounded-[1.5rem] p-6 border border-app-primary/5 hover:-translate-y-1 hover:shadow-lg hover:shadow-app-primary/5 transition-all duration-300 cursor-pointer group">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 ${cat.color}`}>
                 {cat.icon}
               </div>
-              <h4 className="font-bold text-app-text-primary">{cat.name}</h4>
-              <p className="text-sm text-app-text-secondary">{cat.count}</p>
+              <h4 className="font-bold text-app-primary text-lg mb-1">{cat.name}</h4>
+              <p className="text-xs text-app-secondary font-medium">{cat.count}</p>
             </div>
           ))}
         </div>
@@ -58,13 +66,14 @@ export default function HomePage() {
 
       {/* --- SECTION PRODUITS RÉCENTS --- */}
       <section>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold text-app-text-primary mb-6">Matériaux populaires</h3>
-          <Link href="/categories" className="text-app-accent font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="flex items-center justify-between mb-6 px-2">
+          <h3 className="text-2xl font-bold text-app-primary tracking-tight">Matériaux populaires</h3>
+          <Link href="#" className="text-app-accent font-semibold flex items-center gap-2 hover:opacity-80 transition-opacity">
             Voir tout <ArrowRight size={18} />
           </Link>
         </div>
         
+        {/* DESIGN DES CARTES EXACTEMENT COMME LE TIEN */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[1, 2, 3, 4 , 5 , 6 , 7 , 8].map((id) => (
             <div key={id} className="group relative w-full overflow-hidden rounded-2xl md:rounded-3xl border border-app-surface bg-app-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]">
@@ -83,13 +92,16 @@ export default function HomePage() {
                 <span className="inline-flex items-center rounded-full bg-app-secondary px-2 py-1 md:px-3 md:py-1.5 text-[9px] md:text-xs font-semibold text-app-card transition-all duration-300 group-hover:bg-app-accent cursor-pointer">Ajouter</span>
               </div>
             </div>
-          ))};
+          ))}
         </div>
         
+        {/* ==========================================
+            COMMENTAIRES À CONSERVER POUR PLUS TARD
+            ========================================== */}
         {/*
         <PourVousSection/>
 
-        <div className="bg-gradient-to-br from-app-accent via-app-secondary to-app-primary rounded-3xl p-6 md:p-8 text-app-card shadow-lg">
+        <div className="bg-gradient-to-br from-app-accent via-app-secondary to-app-primary rounded-3xl p-6 md:p-8 text-app-card shadow-lg mt-16">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
               <h2 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3">🔥 Promotion exceptionnelle</h2>
