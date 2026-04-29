@@ -1,9 +1,9 @@
 
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import { authentification } from '../config/firebase';
 
 const api: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:9010/quincaillerie',
+  // Utilise ta variable d'environnement ou ton URL par défaut
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -12,20 +12,12 @@ const api: AxiosInstance = axios.create({
 
 // --- INTERCEPTEUR DE REQUÊTE ---
 api.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    const auth = authentification;
-    await auth.authStateReady();
-    const user = auth.currentUser;
-
-    if(user) {
-      try{
-        console.log("Récupération du token d'authentification pour la requête API...");
-        const token = await user.getIdToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch(error) {
-        console.error("Erreur lors de la récupération du token d'authentification :", error);
+  (config: InternalAxiosRequestConfig) => {
+    // Vérification de sécurité pour le SSR (Server Side Rendering)
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('firebase_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     }
     return config;
@@ -41,7 +33,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // 1. On vide le stockage SANS redirection
-      localStorage.removeItem('firebase_token');
+      localStorage.removeItem('auth_token');
       localStorage.removeItem('user_role');
       
       console.warn("Session invalidée : localStorage nettoyé.");
