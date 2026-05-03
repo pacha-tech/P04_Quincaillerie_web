@@ -5,7 +5,7 @@ export interface AddProductDTO {
   categoryId: string;
   purchasePrice: string;
   sellingPrice: string;
-  quantite: number;
+  stock: number;
   unite: string;
   descriptionProduit: string;
 }

@@ -5,6 +5,7 @@ import { RegisterCustomerDTO } from '../types/DTO/RegisterCustomerDTO';
 import { RegisterSellerDTO } from '../types/DTO/RegisterSellerDTO';
 import { UserInfos } from '../types/UserInfos';
 import api from './apiConfig';
+import { AuthResponse } from '../types/AuthResponse';
 
 
 
@@ -22,7 +23,7 @@ class UserService {
     return await signInWithEmailAndPassword(authentification, email, password);
   }
 
-  
+  /*
   async registerCustomer(registerCustomerDTO: RegisterCustomerDTO | FormData): Promise<void> {
     try {
       await api.post('/auth/registerCustomer', registerCustomerDTO);
@@ -36,19 +37,49 @@ class UserService {
       throw new Error("Une erreur inattendue est survenue.");
     }
   }
+    */
+
+  async registerCustomer(registerCustomerDTO: RegisterCustomerDTO, photo?: File): Promise<AuthResponse> {
+    try {
+      const formData = new FormData();
+
+      
+      const jsonBlob = new Blob([JSON.stringify(registerCustomerDTO)], {
+        type: 'application/json'
+      });
+      
+      
+      formData.append('data', jsonBlob);
+
+    
+      if (photo) {
+        formData.append('photo', photo);
+      }
+
+
+      const response = await api.post('/auth/registerCustomer', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return response.data;
+
+    } catch (error) {
+      this.handleError(error);
+      throw new Error("Une erreur inattendue est survenue.");
+    }
+  }
 
   
-  async registerSeller(registerSellerDTO: RegisterSellerDTO | FormData): Promise<void> {
+  async registerSeller(registerSellerDTO: RegisterSellerDTO | FormData): Promise<AuthResponse> {
     console.log("Données envoyées :", registerSellerDTO);
     try {
-      await api.post('/auth/registerSeller', registerSellerDTO);
+      const response = await api.post('/auth/registerSeller', registerSellerDTO);
+
+      return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (!error.response) {
-          throw new Error("Vérifiez votre connexion internet");
-        }
-        throw new Error(error.response.data?.message || "Une erreur est survenue lors de l'inscription vendeur.");
-      }
+      this.handleError(error);
       throw new Error("Une erreur inattendue est survenue.");
     }
   }
@@ -59,15 +90,29 @@ class UserService {
       const response = await api.get('/users/profile');
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (!error.response) {
-          throw new Error("Vérifiez votre connexion internet");
-        }
-        throw new Error("Impossible de récupérer les informations de l'utilisateur.");
-      }
+      this.handleError(error);
       throw new Error("Une erreur inattendue est survenue.");
     }
   }
+
+  private handleError(error: any) {
+    console.error("Erreur API :", error);
+    if (!error.response) {
+      throw new Error("Vérifiez votre connexion internet");
+    }
+
+    const status = error.response.status;
+    const message = error.response.data?.message || "Une erreur est survenue";
+
+    if (status === 404) {
+      throw new Error(message);
+    } else if (status === 403) {
+      throw new Error("Vous n'avez pas l'autorisation d'accéder à ces informations.");
+    } else {
+      throw new Error("Une erreur est survenue. Réessayez plus tard.");
+    }
+  }
+
 }
 
 

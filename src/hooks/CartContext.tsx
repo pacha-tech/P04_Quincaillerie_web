@@ -38,7 +38,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('brixel_cart', JSON.stringify(items));
   }, [items]);
 
-  // --- Fonction centralisée pour gérer les toasts d'erreur ---
+  
   const handleCartError = (error: unknown, defaultMsg: string) => {
     if (error instanceof NoInternetConnectionException) {
       toast.error(error.message);

@@ -23,7 +23,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   });
 
 
-  const [sortBy , setSortBy] = useState<string>('default');
+  const [sortBy , setSortBy] = useState<string>('price-asc');
 
   const requestLocation = () => {
     setLocation((prev) => ({ ...prev, loading: true, error: null }));

@@ -1,15 +1,9 @@
-// src/utils/distance.ts
 
-/**
- * Convertit des degrés en radians
- */
 const deg2rad = (deg: number) => {
   return deg * (Math.PI / 180);
 };
 
-/**
- * Calcule la distance entre deux coordonnées GPS en kilomètres
- */
+
 export const calculateDistance = (
   lat1: number,
   lon1: number,

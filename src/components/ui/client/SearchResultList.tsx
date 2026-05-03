@@ -9,7 +9,7 @@ import { calculateDistance } from '@/src/utils/Distance';
 export default function SearchResultsList({ groupedProducts }: { groupedProducts: ProductSearch[] }) {
     const { latitude, longitude, sortBy } = useLocation();
 
-    const getSortedStores = (stores: any[]) => {
+    const getSortedStores = (stores: Price[]) => {
         return [...stores].sort((a, b) => {
             // On vérifie si la boutique a un prix promo, sinon on prend le prix normal
             const priceA = a.inPromotion ? Number(a.pricePromo) : Number(a.price);
@@ -18,13 +18,13 @@ export default function SearchResultsList({ groupedProducts }: { groupedProducts
             if (sortBy === 'price-asc') return priceA - priceB;
             if (sortBy === 'price-desc') return priceB - priceA;
             if (sortBy === 'distance') {
-                const distA = (latitude && longitude && a.latitude && a.longitude) 
-                    ? calculateDistance(latitude, longitude, a.latitude, a.longitude) : Infinity;
-                const distB = (latitude && longitude && b.latitude && b.longitude) 
-                    ? calculateDistance(latitude, longitude, b.latitude, b.longitude) : Infinity;
+                const distA = (latitude && longitude && a.latitudeQuincaillerie && a.longitudeQuincaillerie) 
+                    ? calculateDistance(latitude, longitude, a.latitudeQuincaillerie, a.longitudeQuincaillerie) : Infinity;
+                const distB = (latitude && longitude && b.latitudeQuincaillerie && b.longitudeQuincaillerie) 
+                    ? calculateDistance(latitude, longitude, b.latitudeQuincaillerie, b.longitudeQuincaillerie) : Infinity;
                 return distA - distB;
             }
-            return 0; // 'default'
+            return 0;
         });
     };
 
@@ -50,7 +50,7 @@ export default function SearchResultsList({ groupedProducts }: { groupedProducts
                         <div className="flex overflow-x-auto gap-3 md:gap-4 pb-4 snap-x snap-mandatory px-1 mt-0
                             [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {sortedStores.map((store: Price, idx: number) => (
-                                <div key={idx} className="snap-start shrink-0 w-[160px] md:w-[220px]">
+                                <div key={idx} className="snap-start shrink-0 w-[200px] md:w-[220px]">
                                     <StoreCard 
                                         store={store} 
                                         product={product} 

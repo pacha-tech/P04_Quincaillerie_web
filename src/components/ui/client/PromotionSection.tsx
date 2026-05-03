@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Image as ImageIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { getPromotedProducts } from '@/src/services/ProductService';
+import { productService } from '@/src/services/ProductService';
 import { ProductSearch } from '@/src/types/productSearch';
 import { useCart } from '@/src/hooks/CartContext';
 import { useRouter } from 'next/navigation';
@@ -22,7 +22,7 @@ export default function PromotionsSection() {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await getPromotedProducts();
+        const data = await productService.getPromotedProducts();
         setPromotedProducts(data);
       } catch (err: any) {
         setError(err.message || "Impossible de charger les promotions.");
@@ -38,7 +38,7 @@ export default function PromotionsSection() {
     sessionStorage.setItem('brixel_preloaded_product', JSON.stringify(product));
     
     // 2. On navigue vers la page
-    router.push(`/authenticated/client/quincaillerie/${idQuincaillerie}/prices/${product.priceSearchProductsDTO[0].idPrice}`);
+    router.push(`/client/quincaillerie/${idQuincaillerie}/prices/${product.priceSearchProductsDTO[0].idPrice}`);
   };
 
   const handleAddToCart = async (idPrice: string) => {

@@ -14,8 +14,8 @@ export default function SearchBar() {
     if (query.trim()) {
       // 👈 LA MAGIE EST ICI :
       // Si on est déjà dans /authenticated, on y reste. Sinon on va vers la recherche publique.
-      const basePath = pathname.startsWith('/authenticated')
-        ? '/authenticated/client/search'
+      const basePath = pathname.startsWith('/client')
+        ? '/client/search'
         : '/search';
 
       router.push(`${basePath}?q=${encodeURIComponent(query)}`);

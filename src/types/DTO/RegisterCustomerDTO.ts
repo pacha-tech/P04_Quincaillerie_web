@@ -5,5 +5,4 @@ export interface RegisterCustomerDTO {
   phone: string;
   password: string;
   role: string;
-  imageUrl: string;
 }

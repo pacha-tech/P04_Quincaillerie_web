@@ -49,7 +49,7 @@ export default function LoginPage() {
       if(role === 'VISITEUR'){
         router.push('/visiteur');
       } else {
-        router.push(role === 'VENDEUR' ? '/authenticated/vendeur' : '/authenticated/client');
+        router.push(role === 'VENDEUR' ? '/vendeur' : '/client');
       }
 
     } catch (error: any) {
@@ -120,9 +120,14 @@ export default function LoginPage() {
           </button>
 
           {!isLoading && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-4 text-xs md:text-sm">
-              <span className="text-gray-500">Pas encore de compte ?</span>
-              <Link href="/signup" className="text-app-primary font-bold hover:underline p-1">Créer un compte</Link>
+            <div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-4 text-xs md:text-sm">
+                <span className="text-gray-500">Pas encore de compte ?</span>
+                <Link href="/signup" className="text-app-primary font-bold hover:underline p-1">Créer un compte</Link>
+              </div>
+              <div className='flex flex-col sm:flex-row items-center justify-center'>
+                <Link href="/" className="text-app-primary text-sm text-center  underline p-1">Retour a l'accueil</Link>
+              </div>
             </div>
           )}
         </form>

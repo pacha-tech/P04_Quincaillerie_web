@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Camera, Mail, Phone, Lock, Eye, EyeOff, User } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { RegisterCustomerDTO } from '@/src/types/DTO/RegisterCustomerDTO';
+import { userService } from '@/src/services/UserService';
+import { UserRole } from '@/src/types/auth';
+import { signInWithCustomToken } from 'firebase/auth';
+import { authentification } from '@/src/config/firebase';
+import { useAuth } from '@/src/hooks/AuthContext';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -14,9 +20,10 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const {login} = useAuth();
 
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,26 +62,52 @@ export default function SignUpPage() {
     if (!validateForm()) return;
     setIsLoading(true);
 
+    const data: RegisterCustomerDTO = {
+        name: formData.name.trim(),
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        role: "CLIENT"
+    }
+
     try {
-      const data = new FormData();
-      data.append('name', formData.name);
-      data.append('email', formData.email);
-      data.append('phone', formData.phone);
-      data.append('password', formData.password);
-      if (selectedImage) data.append('file', selectedImage);
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await userService.registerCustomer(data, selectedImage);
+      
+      
+      const customToken = response.token; 
+      console.log("Le token est:",customToken);
 
+      if (!customToken) {
+        throw new Error("Le serveur n'a pas renvoyé de token d'authentification.");
+      }
+
+      console.log("On tente de s'auto loger");
+      const userCredential = await signInWithCustomToken(authentification, customToken);
+      
+      
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const token = idTokenResult.token;
+      
+      const role = idTokenResult.claims.role;
+      console.log("Le role est: ",role);
+
+      
+      localStorage.setItem('firebase_token', token);
+      login(role as UserRole);
+
+      // 5. Message de succès
       await Swal.fire({
         icon: 'success',
         title: `Bienvenue ${formData.name} !`,
         text: 'Votre compte a été créé avec succès.',
-        confirmButtonText: "Se connecter",
+        confirmButtonText: "Accéder à mon espace",
         confirmButtonColor: '#00897B',
         allowOutsideClick: false,
       });
       
-      router.push('/login'); 
+      // 6. Redirection
+      router.push('/client');
       
     } catch (error: any) {
       Swal.fire({
@@ -157,9 +190,14 @@ export default function SignUpPage() {
           </button>
 
           {!isLoading && (
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-2 text-xs md:text-sm">
-              <span className="text-gray-500">Déjà un compte ?</span>
-              <Link href="/login" className="text-app-primary font-bold hover:underline p-1">Connectez-vous</Link>
+            <div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-2 text-xs md:text-sm">
+                <span className="text-gray-500">Déjà un compte ?</span>
+                <Link href="/login" className="text-app-primary font-bold hover:underline p-1">Connectez-vous</Link>
+              </div>
+              <div className='flex flex-row items-center justify-center'>
+                <Link href="/signup/vendeur" className='underline font-bold'>Ou creer un Compte Vendeur</Link>
+              </div>
             </div>
           )}
         </form>

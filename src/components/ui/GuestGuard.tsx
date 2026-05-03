@@ -16,7 +16,7 @@ export default function GuestGuard({ children }: { children: React.ReactNode }) 
     if (role && role !== "VISITEUR") {
       console.log(`Déjà connecté en tant que ${role}. Redirection vers le dashboard...`);
       // On le renvoie dans son espace dédié
-      router.replace(`/authenticated/${role.toLowerCase()}`);
+      router.replace(`/${role.toLowerCase()}`);
     } else {
       // C'est un vrai visiteur, on le laisse passer
       setIsGuest(true);

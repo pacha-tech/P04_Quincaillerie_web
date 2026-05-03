@@ -7,6 +7,5 @@ export interface ProductSearch {
   unite: string;
   description?: string;
   imageUrl: string;
-  quincaillerie: string;
   priceSearchProductsDTO: Price[];
 }

@@ -35,120 +35,136 @@ const handleApiError = (error: unknown, contextMessage: string) => {
   throw new Error("Erreur de traitement des données.");
 };
 
+class ProductService {
 
-export const getPromotedProducts = async (): Promise<ProductSearch[]> => {
-  try {
-    const response = await api.get('/promotion/allProductInPromotion');
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "la récupération des promotions");
-    return [];
-  }
-};
+  async getPromotedProducts (): Promise<ProductSearch[]>{
 
-export const searchProducts = async (query: string): Promise<ProductSearch[]> => {
-  try {
-    const response = await api.get(`/products/search`, {
-      params: { name: query }
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "la recherche de produits");
-    return [];
-  }
-};
-
-export const getProductsByQuincaillerie = async (): Promise<ProductStock[]> => {
-  try {
-    const response = await api.get('/products/getStock');
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "la récupération des stocks du magasin");
-    return [];
-  }
-};
-
-export const getRecommandationByProductAndStore = async (idProduct: string, idQuincaillerie: string): Promise<ProductRecommended[]> => {
-  try {
-    const response = await api.get('/products/recommendations', {
-      params: { idProduct, idQuincaillerie }
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "la récupération des recommandations");
-    return [];
-  }
-};
-
-
-export const addProduct = async (productData: AddProductDTO, imageFile?: File): Promise<void> => {
-  try {
-    const formData = new FormData();
-
-    // Ajout du JSON en tant que chaîne de caractères (comme dans ton Dart : MultipartFile.fromString)
-    formData.append("data", new Blob([JSON.stringify(productData)], { type: "application/json" }));
-
-    // Ajout de l'image si elle existe
-    if (imageFile) {
-      formData.append("image", imageFile);
+    try {
+      const response = await api.get('/promotion/allProductInPromotion');
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération des promotions");
+      return [];
     }
+  };
 
-    // Le Content-Type 'multipart/form-data' est généralement géré automatiquement par Axios quand il voit un FormData
-    await api.post('/products/addProduct', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+  async searchProducts (query: string): Promise<ProductSearch[]> {
+    try {
+      const response = await api.get(`/products/search`, {
+        params: { name: query }
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la recherche de produits");
+      return [];
+    }
+  };
+
+  async getProductsByQuincaillerie(): Promise<ProductStock[]> {
+    try {
+      const response = await api.get('/products/getStock');
+      
+      const data = response.data.map((item: any) => ({
+        ...item,
+        sellPrice: typeof item.sellPrice === 'string' ? parseFloat(item.sellPrice) : (item.sellPrice || 0),
+        purchasePrice: typeof item.purchasePrice === 'string' ? parseFloat(item.purchasePrice) : (item.purchasePrice || 0),
+        pricepromo: item.pricePromo 
+          ? (typeof item.pricePromo === 'string' ? parseFloat(item.pricePromo) : item.pricePromo) 
+          : undefined,
+        taux: item.taux 
+          ? (typeof item.taux === 'string' ? parseFloat(item.taux) : item.taux) 
+          : undefined
+      }));
+
+      return data;
+    } catch (error) {
+      handleApiError(error, "la récupération des stocks du magasin");
+      return [];
+    }
+  }
+
+  async getRecommandationByProductAndStore(idProduct: string, idQuincaillerie: string): Promise<ProductRecommended[]>{
+    try {
+      const response = await api.get('/products/recommendations', {
+        params: { idProduct, idQuincaillerie }
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération des recommandations");
+      return [];
+    }
+  };
+
+
+  async addProduct(productData: AddProductDTO, imageFile?: File): Promise<void>{
+    try {
+      const formData = new FormData();
+
+      // Ajout du JSON en tant que chaîne de caractères (comme dans ton Dart : MultipartFile.fromString)
+      formData.append("data", new Blob([JSON.stringify(productData)], { type: "application/json" }));
+
+      // Ajout de l'image si elle existe
+      if (imageFile) {
+        formData.append("image", imageFile);
       }
-    });
-  } catch (error) {
-    handleApiError(error, "l'ajout du produit");
-  }
-};
 
-export const updateProduct = async (idProduit: string, changes: Record<string, any>, imageFile?: File): Promise<void> => {
-  try {
-    const formData = new FormData();
-
-    // On extrait l'image des "changes" si elle y a été glissée (pour imiter ta logique Dart)
-    let finalImageFile = imageFile;
-    const dataToEncode = { ...changes };
-
-    if (dataToEncode.imageFile instanceof File) {
-      finalImageFile = dataToEncode.imageFile;
-      delete dataToEncode.imageFile;
+      // Le Content-Type 'multipart/form-data' est généralement géré automatiquement par Axios quand il voit un FormData
+      await api.post('/products/addProduct', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } catch (error) {
+      handleApiError(error, "l'ajout du produit");
     }
+  };
 
-    // Ajout des données JSON
-    formData.append("data", new Blob([JSON.stringify(dataToEncode)], { type: "application/json" }));
+  async updateProduct(idProduit: string, changes: Record<string, any>, imageFile?: File): Promise<void>{
+    try {
+      const formData = new FormData();
 
-    // Ajout de l'image
-    if (finalImageFile) {
-      formData.append("image", finalImageFile);
-    }
+      let finalImageFile = imageFile;
+      const dataToEncode = { ...changes };
 
-    await api.patch(`/products/${idProduit}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+      if (dataToEncode.imageFile instanceof File) {
+        finalImageFile = dataToEncode.imageFile;
+        delete dataToEncode.imageFile;
       }
-    });
-  } catch (error) {
-    handleApiError(error, "la mise à jour du produit");
-  }
-};
 
-export const deleteProduct = async (idProduct: string): Promise<void> => {
-  try {
-    await api.delete(`/products/${idProduct}`);
-  } catch (error) {
-    handleApiError(error, "la suppression du produit");
-  }
-};
+      formData.append("data", new Blob([JSON.stringify(dataToEncode)], { type: "application/json" }));
 
-export const getProductById = async (priceId: string): Promise<ProductSearch> => {
-  try {
-    const response = await api.get(`/products/getProduct/${priceId}`);
-    return response.data;
-  } catch (error) {
-    handleApiError(error, "la récupération du produit");
-    throw error; 
-  }
-};
+      // Ajout de l'image
+      if (finalImageFile) {
+        formData.append("image", finalImageFile);
+      }
+
+      await api.patch(`/products/${idProduit}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+    } catch (error) {
+      handleApiError(error, "la mise à jour du produit");
+    }
+  };
+
+  async deleteProduct(idProduct: string): Promise<void>{
+    try {
+      await api.delete(`/products/${idProduct}`);
+    } catch (error) {
+      handleApiError(error, "la suppression du produit");
+    }
+  };
+
+  async getProductById(priceId: string): Promise<ProductSearch>{
+    try {
+      const response = await api.get(`/products/getProduct/${priceId}`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération du produit");
+      throw error; 
+    }
+  };
+}
+
+export const productService = new ProductService();

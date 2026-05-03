@@ -29,7 +29,7 @@ export default function UnauthorizedPage() {
 
         <div className="flex flex-col gap-3">
           <button 
-            onClick={() => router.replace(`/authenticated/${role!.toLowerCase()}`)}
+            onClick={() => router.replace(`/${role!.toLowerCase()}`)}
             className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft size={20} />
