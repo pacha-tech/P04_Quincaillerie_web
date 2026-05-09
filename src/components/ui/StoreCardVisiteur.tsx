@@ -10,7 +10,7 @@ import { useCart } from '@/src/hooks/CartContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function StoreCard({ 
+export default function StoreCardVisiteur({ 
     store, 
     product, 
     userLocation 
@@ -19,16 +19,13 @@ export default function StoreCard({
     product: ProductSearch; 
     userLocation: { latitude: number | null; longitude: number | null } 
 }) {
-    const { items, addToCart, updateQuantity } = useCart();
+    
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
 
     // ATTENTION : Remplace 'stock' par la bonne propriété de ton backend si nécessaire
     const availableStock = (store as any).stock ?? 0;
 
-    // Vérifier la présence et la quantité de cet article dans le panier
-    const cartItem = items?.find(item => item.idPrice === store.idPrice);
-    const quantityInCart = cartItem ? cartItem.quantity : 0;
 
     const getDistanceLabel = () => {
         if (userLocation.latitude && userLocation.longitude && store.latitudeQuincaillerie && store.longitudeQuincaillerie) {
@@ -51,57 +48,7 @@ export default function StoreCard({
         router.push(`/client/quincaillerie/${store.idQuincaillerie}/prices/${store.idPrice}`);
     };
 
-    const handleAddToCart = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (availableStock <= 0){
-            toast.error("stock de " + product.name + " epuisé");
-            return;
-        } 
 
-        try {
-            setIsLoading(true);
-            await addToCart(store.idPrice);
-        } catch (error) {
-            console.error(error);
-            alert("Erreur lors de l'ajout au panier");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleIncrement = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (quantityInCart >= availableStock) {
-            toast.error("stock de " + product.name + " epuisé");
-            return; 
-        }
-
-        try {
-            setIsLoading(true);
-            await updateQuantity(store.idPrice, 1);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleDecrement = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        try {
-            setIsLoading(true);
-            await updateQuantity(store.idPrice, -1);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     return (
         <div className="group relative w-full overflow-hidden rounded-2xl md:rounded-3xl border border-app-surface bg-app-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl active:scale-[0.98]">
@@ -182,7 +129,7 @@ export default function StoreCard({
                     )}
                 </div>
                 
-                {/* ZONE DU BOUTON PANIER */}
+                {/* ZONE DU BOUTON PANIER 
                 <div className="flex-shrink-0">
                     {isLoading ? (
                         <div className="flex items-center justify-center h-8 md:h-10 px-3">
@@ -219,6 +166,7 @@ export default function StoreCard({
                         </div>
                     )}
                 </div>
+                */}
             </div>
         </div>
     );

@@ -4,16 +4,25 @@ import { use, useState } from 'react';
 import { useCart } from '@/src/hooks/CartContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { ChevronLeft, Trash2, MessageSquare, Minus, Plus, Zap, AlertTriangle } from 'lucide-react';
+import { 
+  ChevronLeft, Trash2, MessageSquare, Minus, Plus, Zap, 
+  AlertTriangle, CreditCard, Smartphone, Loader2, CheckCircle, XCircle 
+} from 'lucide-react';
 
 export default function CartDetailPage({ params }: { params: Promise<{ storeId: string }> }) {
   const { storeId } = use(params);
   const { items, updateQuantity, removeItem, clearCart } = useCart();
   const router = useRouter();
 
-  // ── État pour le Popup de confirmation ──
+  // ── États existants ──
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; type: 'cart' | 'item'; targetId?: string } | null>(null);
   
+  // ── ÉTATS POUR LA SIMULATION DE PAIEMENT (Brixel Pay) ──
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [paymentErrorMsg, setPaymentErrorMsg] = useState('');
+
   const storeItems = items.filter(item => item.idQuincaillerie === storeId);
   const storeName = storeItems[0]?.storeName.split(' ')[0] || "la boutique";
 
@@ -41,6 +50,45 @@ export default function CartDetailPage({ params }: { params: Promise<{ storeId: 
       removeItem(confirmModal.targetId);
     }
     setConfirmModal(null);
+  };
+
+  // ── LOGIQUE DE SIMULATION DE PAIEMENT ──
+  const openPaymentModal = () => {
+    setPaymentState('idle');
+    setPhoneNumber('');
+    setPaymentErrorMsg('');
+    setPaymentModalOpen(true);
+  };
+
+  const processSimulatedPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneNumber || phoneNumber.length < 9) return;
+
+    // 1. On passe en mode "Chargement/Attente USSD"
+    setPaymentState('processing');
+
+    // 2. On simule le délai réseau et l'action du client sur son téléphone (4 secondes)
+    setTimeout(() => {
+      // 3. Application des "Numéros Magiques" pour les tests
+      if (phoneNumber === '600000001') {
+        setPaymentState('error');
+        setPaymentErrorMsg('Fonds insuffisants. Veuillez recharger votre compte Mobile Money.');
+      } else if (phoneNumber === '600000002') {
+        setPaymentState('error');
+        setPaymentErrorMsg('Paiement annulé. Vous avez refusé la transaction sur votre téléphone.');
+      } else {
+        // Pour tout autre numéro, on simule un succès
+        setPaymentState('success');
+      }
+    }, 4000); // 4000 millisecondes = 4 secondes
+  };
+
+  const handlePaymentSuccessClose = () => {
+    // Le paiement a réussi : on vide le panier de cette boutique, on ferme le modal et on redirige
+    clearCart(storeId);
+    setPaymentModalOpen(false);
+    // Redirection vers une page de succès globale ou historique des commandes
+    router.push('/client'); 
   };
 
   if (storeItems.length === 0) return null; 
@@ -131,7 +179,7 @@ export default function CartDetailPage({ params }: { params: Promise<{ storeId: 
           </div>
         </div>
 
-        {/* ── Zone Devis (Style plus sobre) ── */}
+        {/* ── Zone Devis ── */}
         <div className="w-full xl:w-[380px] xl:sticky xl:top-6">
           <div className="bg-white rounded-2xl border border-app-secondary/10 shadow-lg p-6">
             <h3 className="text-app-primary text-lg font-black mb-6 border-b border-gray-100 pb-4">
@@ -156,24 +204,157 @@ export default function CartDetailPage({ params }: { params: Promise<{ storeId: 
               </div>
             </div>
 
+            {/* Nouveau bouton lié au modal de paiement */}
+            <button 
+              onClick={openPaymentModal} 
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold text-base transition-colors flex justify-center items-center gap-2 shadow-md cursor-pointer mb-3"
+            >
+              <CreditCard className="w-5 h-5" />
+              Débuter le paiement
+            </button>
+            
+            <p className="text-center text-[11px] text-app-secondary mb-3 px-2">
+              Les frais de livraison et autres détails seront négociés avec la quincaillerie.
+            </p>
+            
             <button 
               onClick={handleNegotiate} 
-              className="w-full bg-app-primary hover:bg-app-primary/90 text-white py-4 rounded-xl font-bold text-base transition-colors flex justify-center items-center gap-2 shadow-md cursor-pointer"
+              className=" w-full bg-white border border-app-primary text-app-primary hover:bg-app-primary/5 py-3.5 rounded-xl font-bold text-sm transition-colors flex justify-center items-center gap-2 shadow-sm cursor-pointer"
             >
-              <MessageSquare className="w-5 h-5" />
-              Négocier sur Chat
+              <MessageSquare className="w-4 h-4" />
+              Négocier sur le Chat
             </button>
-            <p className="text-center text-[11px] text-app-secondary mt-4">
-              Passez à la messagerie pour confirmer le prix final et la livraison avec le vendeur.
-            </p>
           </div>
         </div>
 
       </div>
 
-      {/* ── Modal de Confirmation (Custom Popup) ── */}
+      {/* ── MODAL DE PAIEMENT SIMULÉ (Brixel Pay) ── */}
+      {paymentModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-app-primary/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            {/* Header du Modal */}
+            <div className="bg-gray-50 border-b border-gray-100 p-5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-app-primary rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-black text-lg text-app-primary">Brixel Pay</span>
+              </div>
+              {paymentState !== 'processing' && paymentState !== 'success' && (
+                <button onClick={() => setPaymentModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <XCircle className="w-6 h-6" />
+                </button>
+              )}
+            </div>
+
+            <div className="p-6 md:p-8">
+              {/* ÉTAPE 1 : SAISIE (IDLE) */}
+              {paymentState === 'idle' && (
+                <form onSubmit={processSimulatedPayment} className="space-y-6">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-2xl font-black text-app-primary">{totalAmount.toLocaleString()} FCFA</h3>
+                    <p className="text-sm text-app-secondary">Paiement Mobile Money (MTN / Orange)</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-app-secondary uppercase tracking-wider">Numéro de téléphone</label>
+                    <div className="relative">
+                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input 
+                        type="tel" 
+                        required
+                        placeholder="Ex: 600000000"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl font-bold text-app-primary text-lg focus:outline-none focus:ring-2 focus:ring-app-primary/20 focus:border-app-primary transition-all"
+                      />
+                    </div>
+                    <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-[11px] font-medium mt-3 border border-blue-100">
+                      <strong>Astuces de test :</strong><br/>
+                      • 600000001 = Échec (Fonds insuffisants)<br/>
+                      • 600000002 = Échec (Annulation)<br/>
+                      • Tout autre numéro = Succès
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-md active:scale-95"
+                  >
+                    Confirmer et Payer
+                  </button>
+                </form>
+              )}
+
+              {/* ÉTAPE 2 : ATTENTE USSD (PROCESSING) */}
+              {paymentState === 'processing' && (
+                <div className="py-8 flex flex-col items-center justify-center text-center space-y-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-app-primary/20 rounded-full animate-ping"></div>
+                    <div className="relative bg-white p-4 rounded-full border-4 border-gray-50 shadow-sm">
+                      <Loader2 className="w-12 h-12 text-app-primary animate-spin" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-app-primary mb-2">Validation en cours...</h3>
+                    <p className="text-sm text-app-secondary max-w-[250px] mx-auto">
+                      Veuillez consulter votre téléphone ({phoneNumber}) et entrer votre code PIN pour valider la transaction.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* ÉTAPE 3A : SUCCÈS (SUCCESS) */}
+              {paymentState === 'success' && (
+                <div className="py-6 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-2">
+                    <CheckCircle className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-app-primary mb-1">Paiement Réussi !</h3>
+                    <p className="text-sm text-app-secondary">
+                      Votre commande chez {storeName} a bien été payée.
+                    </p>
+                  </div>
+                  <button 
+                    onClick={handlePaymentSuccessClose}
+                    className="w-full bg-app-primary hover:bg-app-primary/90 text-white py-4 rounded-xl font-bold text-base transition-colors mt-4"
+                  >
+                    Voir mes commandes
+                  </button>
+                </div>
+              )}
+
+              {/* ÉTAPE 3B : ERREUR (ERROR) */}
+              {paymentState === 'error' && (
+                <div className="py-6 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in duration-300">
+                  <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
+                    <XCircle className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-app-primary mb-1">Paiement Échoué</h3>
+                    <p className="text-sm text-red-500 font-medium bg-red-50 p-3 rounded-lg border border-red-100">
+                      {paymentErrorMsg}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={() => setPaymentState('idle')}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-app-primary py-4 rounded-xl font-bold text-base transition-colors mt-4"
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Confirmation Suppression (Inchangé) ── */}
       {confirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
               <AlertTriangle className="w-6 h-6" />

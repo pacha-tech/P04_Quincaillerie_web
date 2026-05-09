@@ -4,4 +4,5 @@ export interface UserInfos {
   phone: string;
   photoUrl: string;
   role: string;
+  email: string;
 }

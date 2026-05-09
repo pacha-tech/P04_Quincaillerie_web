@@ -5,9 +5,13 @@ import StoreCard from './StoreCard';
 import { ProductSearch } from '@/src/types/productSearch';
 import { Price } from '@/src/types/Price';
 import { calculateDistance } from '@/src/utils/Distance';
+import { useAuth } from '@/src/hooks/AuthContext';
+import { Loader2 } from 'lucide-react';
+import StoreCardVisiteur from '../StoreCardVisiteur';
 
 export default function SearchResultsList({ groupedProducts }: { groupedProducts: ProductSearch[] }) {
     const { latitude, longitude, sortBy } = useLocation();
+    const {role , isLoading} = useAuth();
 
     const getSortedStores = (stores: Price[]) => {
         return [...stores].sort((a, b) => {
@@ -51,11 +55,22 @@ export default function SearchResultsList({ groupedProducts }: { groupedProducts
                             [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {sortedStores.map((store: Price, idx: number) => (
                                 <div key={idx} className="snap-start shrink-0 w-[200px] md:w-[220px]">
-                                    <StoreCard 
-                                        store={store} 
-                                        product={product} 
-                                        userLocation={{ latitude, longitude}} 
-                                    />
+                                    {isLoading && 
+                                      <Loader2 size={18}/>
+                                    } 
+                                    {role == "CLIENT" &&
+                                        <StoreCard 
+                                            store={store} 
+                                            product={product} 
+                                            userLocation={{ latitude, longitude}} 
+                                        />
+                                    }:{
+                                        <StoreCardVisiteur 
+                                          store = {store}
+                                          product = {product}
+                                          userLocation = {{latitude , longitude}}
+                                        />
+                                    }
                                 </div>
                             ))}
                         </div>

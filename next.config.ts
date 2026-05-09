@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Se place directement à la racine
-  allowedDevOrigins: ['192.168.0.109', 'localhost:3000'],
+  allowedDevOrigins: ['192.168.0.106', 'localhost:3000'],
   images: {
     remotePatterns: [
       {

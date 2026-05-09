@@ -23,22 +23,6 @@ class UserService {
     return await signInWithEmailAndPassword(authentification, email, password);
   }
 
-  /*
-  async registerCustomer(registerCustomerDTO: RegisterCustomerDTO | FormData): Promise<void> {
-    try {
-      await api.post('/auth/registerCustomer', registerCustomerDTO);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (!error.response) {
-          throw new Error("Vérifiez votre connexion internet");
-        }
-        throw new Error(error.response.data?.message || "Une erreur est survenue lors de l'inscription.");
-      }
-      throw new Error("Une erreur inattendue est survenue.");
-    }
-  }
-    */
-
   async registerCustomer(registerCustomerDTO: RegisterCustomerDTO, photo?: File): Promise<AuthResponse> {
     try {
       const formData = new FormData();

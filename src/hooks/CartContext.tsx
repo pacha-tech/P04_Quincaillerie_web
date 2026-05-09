@@ -69,7 +69,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     const targetItem = items.find(item => item.idPrice === idPrice);
     const oldQuantity = targetItem ? targetItem.quantity : 0;
     
-    // Mise à jour optimiste
+    if (targetItem && delta > 0 && targetItem.quantity >= targetItem.stock) {
+      toast.error(`Stock insuffisant ! Seuls ${targetItem.stock} articles sont disponibles.`);
+      return;
+    }
+    
     setItems(current => current.map(item => {
       if (item.idPrice === idPrice) {
         return { ...item, quantity: Math.max(0, item.quantity + delta) };
@@ -96,7 +100,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const addToCart = async (idPrice: string) => {
-    // Pas de modification optimiste ici car on n'a pas encore les détails (nom, image) du produit
+    const targetItem = items.find(item => item.idPrice === idPrice);
+    if (targetItem && targetItem.stock <=0 ) {
+      toast.error("Stock insuffisant epuise");
+      return;
+    }
     try {
       await panierService.addProductToPanier(idPrice);
       await refreshCart(); // Récupère le produit complet du serveur

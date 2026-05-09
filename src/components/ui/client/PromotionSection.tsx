@@ -137,7 +137,8 @@ export default function PromotionsSection() {
                   </div>
                   <h3 className="text-xs md:text-base font-semibold text-app-primary mb-0.5 md:mb-1 line-clamp-1">{product.name}</h3>
                   <p className="text-[9px] md:text-xs text-app-secondary/70 line-clamp-1">{activePrice.quincaillerieName}</p>
-                </div>
+                  <p className="text-[9px] md:text-xs text-app-secondary/70 line-clamp-1">{activePrice.stock} {product.unite}s dispo</p>
+               </div>
 
                 <div className="flex items-center justify-between border-t border-app-surface bg-app-surface px-2.5 py-2 md:px-4 md:py-3 h-12 md:h-16">
                   <div className="flex flex-col">

@@ -9,7 +9,8 @@ import { ProductRecommended } from '@/src/types/ProductRecommended';
 import { QuincaillerieDetail } from '@/src/types/QuincaillerieDetail';
 import { ProductSearch } from '@/src/types/productSearch';
 import { productService } from '@/src/services/ProductService';
-import { getQuincaillerieById } from '@/src/services/QuincaillerieService';
+import { quincaillerieService } from '@/src/services/QuincaillerieService';
+
 
 export default function QuincaillerieDetailsPage({ params }: { params: Promise<{ quincaillerieId: string; priceId: string }> }) {
   const { quincaillerieId, priceId } = use(params);
@@ -46,7 +47,7 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
         if (currentProduct) {
           setProduct(currentProduct);
           const [storeData, recoData] = await Promise.all([
-            getQuincaillerieById(quincaillerieId),
+            quincaillerieService.getQuincaillerieById(quincaillerieId),
             productService.getRecommandationByProductAndStore(currentProduct.idProduct, quincaillerieId)
           ]);
           setStoreDetail(storeData);

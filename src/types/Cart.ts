@@ -7,5 +7,6 @@ export interface CartItem {
   pricePromo?: number;
   inPromotion: boolean;
   quantity: number;
+  stock:number;
   imageUrl: string;
 }
