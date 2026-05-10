@@ -14,7 +14,7 @@ const salesData = [
 
 export default function SalesChart() {
   return (
-    <div className="w-full h-[180px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
+    <div className="w-full h-[200px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
       <div className="mb-2">
         <h3 className="text-sm font-bold text-app-primary">Ventes (F CFA)</h3>
       </div>

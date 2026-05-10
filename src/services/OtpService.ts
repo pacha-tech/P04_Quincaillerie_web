@@ -4,7 +4,6 @@ import { NoInternetConnectionException } from '../exception/NoInternetConnection
 import { UserNotConnectedException } from '../exception/UserNotConnectedException';
 import api from './apiConfig';
 import { CodeOtp } from '../types/CodeOtp';
-import { promises } from 'dns';
 import { ValidationRetraitDTO } from '../types/DTO/ValidationRetraitDTO';
 
 
@@ -21,8 +20,6 @@ class OtpService {
 
       if (status === 401) throw new UserNotConnectedException(message);
       
-      // Si tu as créé une exception spécifique pour les paiements échoués (ex: 400 Bad Request)
-      // if (status === 400) throw new PaymentFailedException(message);
 
       throw new AppException(message || "Une erreur est survenue lors du paiement. Réessayez plus tard.");
     }

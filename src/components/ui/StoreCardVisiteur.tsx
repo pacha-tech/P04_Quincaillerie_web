@@ -128,45 +128,6 @@ export default function StoreCardVisiteur({
                         <span className="text-sm md:text-lg font-bold text-app-price-green">{store.price} F</span>
                     )}
                 </div>
-                
-                {/* ZONE DU BOUTON PANIER 
-                <div className="flex-shrink-0">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center h-8 md:h-10 px-3">
-                            <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-app-accent animate-spin" />
-                        </div>
-                    ) : availableStock <= 0 ? (
-                        <span className="inline-flex items-center justify-center h-8 md:h-10 rounded-full bg-gray-200/60 px-4 md:px-5 text-xs md:text-sm font-semibold text-gray-400 cursor-not-allowed">
-                            Rupture
-                        </span>
-                    ) : quantityInCart === 0 ? (
-                        <button 
-                            onClick={handleAddToCart}
-                            className="inline-flex items-center justify-center h-8 md:h-10 rounded-full bg-app-secondary px-4 md:px-5 text-xs md:text-sm font-semibold text-app-card transition-all duration-300 hover:bg-app-accent cursor-pointer"
-                        >
-                            Ajouter
-                        </button>
-                    ) : (
-                        <div className="inline-flex items-center h-8 md:h-10 rounded-full bg-app-accent text-white shadow-sm overflow-hidden">
-                            <button 
-                                onClick={handleDecrement}
-                                className="px-3 md:px-4 h-full hover:bg-black/10 transition-colors flex items-center justify-center text-sm md:text-base font-bold cursor-pointer"
-                            >
-                                -
-                            </button>
-                            <span className="px-1 md:px-2 text-xs md:text-sm font-bold min-w-[20px] text-center">
-                                {quantityInCart}
-                            </span>
-                            <button 
-                                onClick={handleIncrement}
-                                className={`px-3 md:px-4 h-full transition-colors flex items-center justify-center text-sm md:text-base font-bold hover:bg-black/10 cursor-pointer `}
-                            >
-                                +
-                            </button>
-                        </div>
-                    )}
-                </div>
-                */}
             </div>
         </div>
     );

@@ -6,7 +6,8 @@ import ViewsChart from '@/src/components/ui/vendeur/charts/ViewsChart';
 import { 
   TrendingUp, Star, Box, ShoppingBag, AlertTriangle, 
   PlusCircle, RefreshCw, Tag, Store, Clock, Activity,
-  MessageCircle, Wallet
+  MessageCircle, Wallet,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -58,10 +59,26 @@ export default function DashboardVendeur() {
         </div>
 
         
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><SalesChart /></div>
-          <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><OrdersChart /></div>
-          <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><ViewsChart /></div>
+        
+        <div className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm md:text-base font-bold text-app-primary flex items-center gap-2">
+              <Activity className="w-4 h-4 text-app-accent" /> Performances
+            </h2>
+            <Link 
+              href="/vendeur/statistiques" 
+              className="flex items-center gap-1 text-xs font-bold text-app-secondary hover:text-app-primary transition-colors group"
+            >
+              Voir plus 
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><SalesChart /></div>
+            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><OrdersChart /></div>
+            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><ViewsChart /></div>
+          </div>
         </div>
 
         

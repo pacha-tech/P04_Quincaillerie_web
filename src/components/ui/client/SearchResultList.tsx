@@ -58,19 +58,19 @@ export default function SearchResultsList({ groupedProducts }: { groupedProducts
                                     {isLoading && 
                                       <Loader2 size={18}/>
                                     } 
-                                    {role == "CLIENT" &&
+                                    {role === "CLIENT" ? (
                                         <StoreCard 
                                             store={store} 
                                             product={product} 
                                             userLocation={{ latitude, longitude}} 
                                         />
-                                    }:{
+                                    ) : (
                                         <StoreCardVisiteur 
-                                          store = {store}
-                                          product = {product}
-                                          userLocation = {{latitude , longitude}}
+                                        store={store}
+                                        product={product}
+                                        userLocation={{ latitude, longitude }}
                                         />
-                                    }
+                                    )}
                                 </div>
                             ))}
                         </div>

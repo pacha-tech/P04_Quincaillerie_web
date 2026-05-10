@@ -232,6 +232,7 @@ export default function MyOrdersPage() {
     try {
       const data = await otpService.getCodeOtp(selectedOrder.idCommande);
       setOtpData(data);
+      console.log(data);
     } catch (error: any) {
       setOtpError(error.message || "Erreur lors de la génération du code.");
     } finally {

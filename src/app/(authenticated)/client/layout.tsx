@@ -23,6 +23,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
 
   const isHomePage = pathname === '/client';
+  const isSearchPage = pathname === '/client/search';
 
   return (
     <RoleGuard allowedRole="CLIENT">
@@ -56,6 +57,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </div>
 
             {isHomePage && (
+              <div className="hidden md:block flex-1 max-w-md mx-4">
+                <SearchBar />
+              </div>
+            )}
+
+            {isSearchPage && (
               <div className="hidden md:block flex-1 max-w-md mx-4">
                 <SearchBar />
               </div>
