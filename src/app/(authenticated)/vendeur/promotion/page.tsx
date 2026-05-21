@@ -43,6 +43,7 @@ export default function PromotionsPage() {
       const response = await promotionService.getAllPromotion();
 
       const promotions: Promotion[] = response.map(item => ({
+        idCampagne: item.idCampagne,
         name: item.name,
         taux: item.taux,
         dateDebut: item.dateDebut,
@@ -50,6 +51,8 @@ export default function PromotionsPage() {
         estActif: item.estActif,
         nbreProduits: item.nbreProduits,
       }));
+
+      console.log(promotions);
       
       setPromotions(promotions);
     } catch (err: any) {
@@ -298,9 +301,12 @@ export default function PromotionsPage() {
                         </td>
 
                         <td className="p-4 text-center">
-                          <button className="p-2 text-app-accent bg-app-accent/10 hover:bg-app-accent/20 rounded-xl transition cursor-pointer mx-auto flex items-center justify-center">
+                          <Link 
+                            href={`/vendeur/promotion/${promo.idCampagne}?nom=${encodeURIComponent(promo.name)}&statut=${encodeURIComponent(statutDynamique)}`}
+                            className="p-2 text-app-accent bg-app-accent/10 hover:bg-app-accent/20 rounded-xl transition cursor-pointer mx-auto flex items-center justify-center w-8 h-8"
+                          >
                             <Eye className="w-4 h-4" />
-                          </button>
+                          </Link>
                         </td>
 
                         <td className="p-4 text-center relative">
@@ -355,7 +361,7 @@ export default function PromotionsPage() {
 
       {/* ── BOUTON FLOTTANT SUR MOBILE ── */}
       <Link 
-        href="/authenticated/vendeur/promotion/addPromotion" 
+        href="/vendeur/promotion/addPromotion"
         className="md:hidden fixed bottom-6 right-6 z-[9000] flex items-center justify-center w-14 h-14 bg-app-accent text-white rounded-full shadow-2xl hover:bg-app-accent/90 transition active:scale-95"
       >
         <Plus className="w-6 h-6" />

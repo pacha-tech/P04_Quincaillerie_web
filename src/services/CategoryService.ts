@@ -1,4 +1,6 @@
 import { Category } from "../types/Category";
+import { ProductInCategory } from "../types/ProductInCategory";
+import { ProductSearch } from "../types/productSearch";
 import api from "./apiConfig";
 
 class CategoryService {
@@ -6,6 +8,7 @@ class CategoryService {
   async getAllCategory(): Promise<Category[]> {
     try {
       const response = await api.get<Category[]>("/category/allCategory");
+      console.log(response);
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -20,6 +23,21 @@ class CategoryService {
     } catch (error) {
       this.handleError(error);
       throw new Error("Impossible d'ajouter la catégorie.");
+    }
+  }
+
+  async getProductsByCategory(categoryId: string,latitude?: number | null, longitude?: number | null, scope?: string): Promise<ProductInCategory[]> {
+    try {
+      const params: any = {};
+      if (latitude != null) params.latitude = latitude;
+      if (longitude != null) params.longitude = longitude;
+      if (scope != null) params.scope = scope;
+
+      const response = await api.get(`/category/${categoryId}`, { params });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+      throw new Error("Impossible de récupérer les produits de cette catégorie.");
     }
   }
 

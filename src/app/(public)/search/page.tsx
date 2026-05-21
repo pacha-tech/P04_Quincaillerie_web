@@ -1,3 +1,4 @@
+
 import SearchPage from '@/src/components/ui/client/SearchPage';
 import { SearchResultsServerWrapper } from '@/src/components/ui/client/SearchResultsServerWrapper';
 import SearchSkeleton from '@/src/components/ui/client/SearchSkeleton';
@@ -7,7 +8,7 @@ interface SearchProps {
     searchParams: Promise<{ q?: string; lat?: string; lng?: string; scope?: string }>;
 }
 
-export default async function AuthSearchPage({ searchParams }: SearchProps) {
+export default async function PublicSearchPage({ searchParams }: SearchProps) {
     const params = await searchParams;
     const query = params.q || "";
     const lat = params.lat ? Number(params.lat) : null;

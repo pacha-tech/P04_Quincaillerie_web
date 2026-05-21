@@ -229,31 +229,29 @@ export default function AddPromotionPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-64px)] p-4 md:p-6 flex flex-col lg:flex-row gap-6 overflow-hidden bg-app-surface">
+    <div className="md:h-[calc(100vh-64px)] md:p-6 flex flex-col lg:flex-row gap-6 overflow-auto bg-app-surface">
       
-
       <div className="w-full lg:w-1/3 flex flex-col gap-4 h-fit lg:h-full overflow-y-auto">
         
-
         <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => router.back()} 
-                className="md:hidden p-1.5 md:p-2 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition text-gray-600 cursor-pointer"
+                className="md:hidden p-2 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition text-gray-600 cursor-pointer"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
-                <h1 className="text-lg md:text-xl font-black text-gray-900">Nouvelle Promotion</h1>
-                <p className="text-xs text-gray-400">Configurez la campagne</p>
+                <h1 className="text-xl md:text-2xl font-black text-gray-900">Nouvelle Promotion</h1>
+                <p className="text-sm text-gray-500 mt-1">Configurez la campagne</p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Nom de la campagne</label>
+              <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5">Nom de la campagne</label>
               <input 
                 type="text" 
                 value={formData.title}
@@ -261,16 +259,16 @@ export default function AddPromotionPage() {
                   setFormData({...formData, title: e.target.value});
                   setErrors({...errors, title: false});
                 }}
-                className={`w-full px-3 py-1.5 bg-gray-50 border rounded-xl text-xs outline-none transition-all ${
+                className={`w-full px-3 py-2 md:py-2.5 bg-gray-50 border rounded-xl text-sm outline-none transition-all ${
                   errors.title ? 'border-red-500 ring-1 ring-red-500/20' : 'border-gray-200 focus:border-black'
                 }`}
                 placeholder="Ex: Solde d'été 2026"
               />
-              {errors.title && <span className="text-[10px] text-red-500 mt-0.5 block">Requis.</span>}
+              {errors.title && <span className="text-xs text-red-500 mt-1 block font-medium">Ce champ est requis.</span>}
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Taux (%)</label>
+              <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5">Taux (%)</label>
               <div className="relative max-w-[160px]">
                 <input 
                   type="number" 
@@ -279,70 +277,70 @@ export default function AddPromotionPage() {
                     setFormData({...formData, discount: e.target.value});
                     setErrors({...errors, discount: false});
                   }}
-                  className={`w-full px-3 py-1.5 border rounded-xl text-xs outline-none transition-all ${
+                  className={`w-full px-3 py-2 md:py-2.5 border rounded-xl text-sm outline-none transition-all ${
                     errors.discount ? 'border-red-500' : 'border-gray-200 focus:border-black'
                   }`}
                   placeholder="0"
                 />
-                <Percent className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                <Percent className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
               </div>
-              {errors.discount && <span className="text-[10px] text-red-500 mt-0.5 block">Veuillez entrer (1 à 100).</span>}
+              {errors.discount && <span className="text-xs text-red-500 mt-1 block font-medium">Veuillez entrer une valeur (1 à 100).</span>}
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Date de début</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5">Date de début</label>
                 <input 
                   type="date" 
                   value={formData.startDate}
                   onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                  className={`w-full px-3 py-1.5 bg-gray-50 border rounded-xl text-xs outline-none focus:border-black transition-all ${
+                  className={`w-full px-3 py-2 md:py-2.5 bg-gray-50 border rounded-xl text-sm outline-none focus:border-black transition-all ${
                     errors.dateDebut ? 'border-red-500' : 'border-gray-200'
                   }`}
                 />
-                {errors.dateDebut && <span className="text-[10px] text-red-500 mt-0.5 block">Obligatoire.</span>}
+                {errors.dateDebut && <span className="text-xs text-red-500 mt-1 block font-medium">Obligatoire.</span>}
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Date de fin</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5">Date de fin</label>
                 <input 
                   type="date" 
                   value={formData.endDate}
                   onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                  className={`w-full px-3 py-1.5 bg-gray-50 border rounded-xl text-xs outline-none focus:border-black transition-all ${
+                  className={`w-full px-3 py-2 md:py-2.5 bg-gray-50 border rounded-xl text-sm outline-none focus:border-black transition-all ${
                     errors.dateFin ? 'border-red-500' : 'border-gray-200'
                   }`}
                 />
-                {errors.dateFin && <span className="text-[10px] text-red-500 mt-0.5 block">Obligatoire.</span>}
+                {errors.dateFin && <span className="text-xs text-red-500 mt-1 block font-medium">Obligatoire.</span>}
               </div>
             </div>
             
-            {errors.dateLogic && <span className="text-[10px] text-red-500 block">Date de début invalide.</span>}
+            {errors.dateLogic && <span className="text-xs text-red-500 block font-medium">La date de début est invalide.</span>}
           </div>
         </div>
 
         <div className="bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm">
-          <h3 className="text-xs font-bold text-gray-800 mb-3">Statistiques de la campagne</h3>
+          <h3 className="text-sm font-bold text-gray-800 mb-3">Statistiques de la campagne</h3>
           
-          <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-2">
-            <div className="flex justify-between text-xs">
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+            <div className="flex justify-between text-sm">
               <span className="text-gray-500">Produits sélectionnés:</span>
               <span className="font-bold text-gray-900">{selectionCount}</span>
             </div>
 
-            <div className="flex justify-between text-xs">
+            <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total initial:</span>
               <span className="font-semibold text-gray-800">{stats.totalInitial} FCFA</span>
             </div>
 
             {discountRate > 0 && (
               <>
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Total après remise:</span>
                   <span className="font-bold text-green-700">{stats.totalFinal} FCFA</span>
                 </div>
                 
-                <div className="flex justify-between text-xs pt-2 border-t border-gray-200/50">
+                <div className="flex justify-between text-sm pt-3 mt-1 border-t border-gray-200/50">
                   <span className="text-gray-500">Variation :</span>
                   <span className={`font-black ${stats.totalDiff <= 0 ? 'text-red-600' : 'text-green-600'}`}>
                     {stats.totalDiff <= 0 ? '' : '+'}{stats.totalDiff} FCFA ({stats.percentageLost.toFixed(1)}%)
@@ -355,73 +353,73 @@ export default function AddPromotionPage() {
 
       </div>
 
-      <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm flex flex-col h-[400px] lg:h-full overflow-hidden">
+      <div className="flex-1 bg-white border border-gray-100 rounded-2xl p-4 md:p-6 shadow-sm flex flex-col h-[700px] lg:h-full overflow-hidden">
         
         {/* Menu Onglets */}
-        <div className="flex gap-2 border-b border-gray-100 pb-3 mb-4">
+        <div className="flex gap-2 border-b border-gray-100 pb-4 mb-4 overflow-x-scroll">
           <button 
             onClick={() => setActiveTab('products')}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+            className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === 'products' ? 'bg-black text-white shadow' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" /> Produits
+            <LayoutGrid className="w-4 h-4" /> Produits
           </button>
 
           <button 
             onClick={() => setActiveTab('categories')}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+            className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === 'categories' ? 'bg-black text-white shadow' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Folder className="w-3.5 h-3.5" /> Catégories
+            <Folder className="w-4 h-4" /> Catégories
           </button>
 
           <button 
             onClick={() => setActiveTab('all')}
-            className={`flex-1 md:flex-none px-4 py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer ${
+            className={`flex-1 md:flex-none px-4 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition cursor-pointer ${
               activeTab === 'all' ? 'bg-black text-white shadow' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
             }`}
           >
-            <Store className="w-3.5 h-3.5" /> Boutique
+            <Store className="w-4 h-4" /> Boutique
           </button>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
           {activeTab !== 'all' && (
             <div className="relative flex-1 max-w-lg">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input 
                 type="text" 
                 placeholder="Rechercher par nom ou catégorie..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-xs outline-none focus:border-black transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-black transition-all"
               />
             </div>
           )}
           
           {errors.selection && (
-            <div className="p-2 bg-red-50 text-red-600 rounded-xl text-xs flex items-center">
+            <div className="p-2.5 bg-red-50 text-red-600 rounded-xl text-sm font-medium flex items-center">
               Veuillez sélectionner au moins un produit.
             </div>
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-1 space-y-1.5 border border-gray-50 rounded-xl p-2 bg-gray-50/20 max-h-[360px] lg:max-h-none scrollbar-hide">
+        <div className="flex-1 overflow-y-auto pr-2 space-y-2 border border-gray-50 rounded-xl p-2 bg-gray-50/20 lg:max-h-none scrollbar-hide">
           {isLoading ? (
             <div className="flex items-center justify-center py-12 h-full">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-600" />
+              <Loader2 className="w-8 h-8 animate-spin text-gray-600" />
             </div>
           ) : errorMessage ? (
             /* ÉTAT D'ERREUR */
             <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <AlertCircle className="w-8 h-8 text-red-500 mb-3" />
-              <h3 className="text-xs font-bold text-gray-900">Erreur de chargement</h3>
-              <p className="text-[10px] text-gray-500 mt-1 mb-4 max-w-xs">{errorMessage}</p>
+              <AlertCircle className="w-10 h-10 text-red-500 mb-4" />
+              <h3 className="text-sm font-bold text-gray-900">Erreur de chargement</h3>
+              <p className="text-sm text-gray-500 mt-2 mb-5 max-w-xs">{errorMessage}</p>
               <button 
                 onClick={loadData}
-                className="px-4 py-2 bg-gray-900 text-white rounded-xl text-[10px] font-bold hover:bg-gray-800 transition shadow cursor-pointer"
+                className="px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition shadow cursor-pointer"
               >
                 Réessayer
               </button>
@@ -429,9 +427,9 @@ export default function AddPromotionPage() {
           ) : products.length === 0 ? (
             /* ÉTAT LISTE VIDE GLOBALE */
             <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <Tag className="w-8 h-8 text-gray-300 mb-3" />
-              <h3 className="text-xs font-bold text-gray-900">Aucun produit</h3>
-              <p className="text-[10px] text-gray-500 mt-1 max-w-xs">
+              <Tag className="w-10 h-10 text-gray-300 mb-4" />
+              <h3 className="text-sm font-bold text-gray-900">Aucun produit</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs">
                 Vous n'avez aucun produit éligible pour une promotion actuellement.
               </p>
             </div>
@@ -443,31 +441,31 @@ export default function AddPromotionPage() {
                   <div 
                     key={p.idPrice}
                     onClick={() => handleProductToggled(p.idPrice, !p.isSelected)}
-                    className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                    className={`p-3.5 md:p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                       p.isSelected ? 'bg-green-50 border-green-200 text-green-900' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold">{p.name}</span>
-                      <span className="text-[10px] text-gray-400 mt-0.5">
+                      <span className="text-sm md:text-base font-bold">{p.name}</span>
+                      <span className="text-xs text-gray-500 mt-1">
                         {p.category} • <span className="font-bold text-gray-700">{p.price} FCFA</span>
                       </span>
                     </div>
 
                     <div className="flex items-center justify-start gap-4">
                       {p.isSelected && discountRate > 0 && (
-                        <div className="flex flex-col items-center text-[10px] font-bold">
+                        <div className="flex flex-col items-end text-xs font-bold">
                           <span className="text-gray-400 line-through">{p.price} Fcfa</span>
-                          <span className="text-green-700">{newPrice} Fcfa</span>
-                          <span className={`text-[9px] ${difference < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          <span className="text-green-700 text-sm">{newPrice} Fcfa</span>
+                          <span className={`${difference < 0 ? 'text-red-600' : 'text-green-600'}`}>
                             {difference <= 0 ? '' : '+'}{difference} Fcfa
                           </span>
                         </div>
                       )}
-                      <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${
                         p.isSelected ? 'bg-black border-black text-white' : 'bg-white border-gray-300'
                       }`}>
-                        {p.isSelected && <Check className="w-3 h-3" />}
+                        {p.isSelected && <Check className="w-3.5 h-3.5" />}
                       </div>
                     </div>
                   </div>
@@ -476,9 +474,9 @@ export default function AddPromotionPage() {
             ) : (
               /* ÉTAT RECHERCHE SANS RÉSULTAT */
               <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-                <Search className="w-8 h-8 text-gray-300 mb-3" />
-                <h3 className="text-xs font-bold text-gray-900">Aucun résultat</h3>
-                <p className="text-[10px] text-gray-500 mt-1 max-w-xs">
+                <Search className="w-10 h-10 text-gray-300 mb-4" />
+                <h3 className="text-sm font-bold text-gray-900">Aucun résultat</h3>
+                <p className="text-sm text-gray-500 mt-2 max-w-xs">
                   Aucun produit ne correspond à la recherche "{searchQuery}".
                 </p>
               </div>
@@ -490,25 +488,25 @@ export default function AddPromotionPage() {
                 <div 
                   key={c.name}
                   onClick={() => handleCategoryToggled(c.name, !c.isSelected)}
-                  className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                  className={`p-3.5 md:p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                     c.isSelected ? 'bg-green-50 border-green-200 text-green-900' : 'bg-gray-50/50 border-gray-100 hover:bg-gray-50'
                   }`}
                 >
                   <div className="flex flex-col w-full">
-                    <span className="text-xs font-bold">{c.name}</span>
-                    <p className="text-[9px] text-gray-400 mt-0.5">Sélectionner tous les produits de cette catégorie</p>
+                    <span className="text-sm md:text-base font-bold">{c.name}</span>
+                    <p className="text-xs text-gray-500 mt-1">Sélectionner tous les produits de cette catégorie</p>
 
                     {c.isSelected && (
-                      <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-200/50">
-                        <span className="text-[10px] text-gray-600">
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200/50">
+                        <span className="text-xs font-medium text-gray-600">
                           {statsCat.count} produit(s)
                         </span>
                         
                         <div className="flex items-center gap-4">
-                          <div className="flex flex-col items-end text-[10px] font-bold">
+                          <div className="flex flex-col items-end text-xs font-bold">
                             <span className="text-gray-400 line-through">{statsCat.initialTotal} Fcfa</span>
-                            <span className="text-green-700">{statsCat.finalTotal} Fcfa</span>
-                            <span className={`text-[9px] ${statsCat.diff < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            <span className="text-green-700 text-sm">{statsCat.finalTotal} Fcfa</span>
+                            <span className={`${statsCat.diff < 0 ? 'text-red-600' : 'text-green-600'}`}>
                               {statsCat.diff <= 0 ? '' : '+'}{statsCat.diff} Fcfa
                             </span>
                           </div>
@@ -518,26 +516,26 @@ export default function AddPromotionPage() {
                   </div>
                   
                   <div className="flex items-center justify-center gap-4 pl-4">
-                    <div className={`w-4.5 h-4.5 rounded flex items-center justify-center border transition-all ${
+                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${
                       c.isSelected ? 'bg-black border-black text-white' : 'bg-white border-gray-300'
                     }`}>
-                      {c.isSelected && <Check className="w-3 h-3" />}
+                      {c.isSelected && <Check className="w-3.5 h-3.5" />}
                     </div>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Store className="w-8 h-8 text-gray-300 mb-2" />
-              <h3 className="text-xs font-bold text-gray-900">Activer pour toute la boutique</h3>
-              <p className="text-[10px] text-gray-400 mt-0.5 max-w-xs leading-relaxed mb-4">
+            <div className="flex flex-col items-center justify-center py-12 text-center h-full">
+              <Store className="w-10 h-10 text-gray-300 mb-3" />
+              <h3 className="text-sm font-bold text-gray-900">Activer pour toute la boutique</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs leading-relaxed mb-6">
                 Appliquer la promotion aux {products.length} produits du magasin.
               </p>
               
               <button 
                 onClick={() => handleToggleAll()}
-                className={`px-4 py-2 text-[10px] font-bold rounded-xl shadow transition cursor-pointer ${
+                className={`px-6 py-2.5 text-sm font-bold rounded-xl shadow transition cursor-pointer ${
                   products.every(p => p.isSelected) 
                     ? 'bg-red-900 text-white hover:bg-red-800' 
                     : 'bg-gray-900 text-white hover:bg-gray-800'
@@ -549,8 +547,8 @@ export default function AddPromotionPage() {
           )}
         </div>
 
-        <div className="border-t border-gray-100 pt-3 mt-4 flex items-center justify-between">
-          <span className="text-xs font-bold text-gray-400">
+        <div className="border-t border-gray-100 pt-4 mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="text-sm font-bold text-gray-500 self-start md:self-auto">
             {selectionCount} produit(s) sélectionné(s)
           </span>
 
@@ -558,16 +556,16 @@ export default function AddPromotionPage() {
             type="submit"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="hidden lg:flex px-8 py-3 bg-black text-white rounded-xl font-bold text-xs items-center justify-center gap-2 shadow transition hover:bg-gray-800 disabled:opacity-50 cursor-pointer"
+            className="flex w-full md:w-auto px-6 md:px-8 py-3.5 bg-black text-white rounded-xl font-bold text-sm items-center justify-center gap-2 shadow transition hover:bg-gray-800 disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Activation...</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Activation en cours...</span>
               </>
             ) : (
               <>
-                <Save className="w-4 h-4" />
+                <Save className="w-5 h-5" />
                 <span>ACTIVER LA PROMOTION</span>
               </>
             )}

@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { 
   Menu, X, Bell, Search, User, Loader2, 
-  Settings, Edit3, Mail, Phone, Shield 
+  Settings, Edit3, Mail, Phone, Shield, MapPin
 } from 'lucide-react';
 import SideBar from '@/src/components/ui/SideBar';
 import RoleGuard from '@/src/components/ui/RoleGuard';
 import SearchBar from '@/src/components/ui/client/SearchBar';
 import { useCart } from '@/src/hooks/CartContext';
+import { useLocation } from '@/src/hooks/LocationContext';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/src/hooks/AuthContext';
@@ -16,10 +17,14 @@ import ClientFooter from '@/src/components/ui/client/ClientFooter';
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // Nouvel état pour le menu profil
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   const { items } = useCart();
   const { userInfos, isLoading } = useAuth();
+  
+  
+  const { latitude, longitude, loading: locationLoading, error: locationError, requestLocation } = useLocation();
+  
   const pathname = usePathname();
 
   const isHomePage = pathname === '/client';
@@ -69,10 +74,39 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             )}
 
             {/* Éléments de droite */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              
+              {/* 🌟 INDICATEUR GPS AJOUTÉ ICI 🌟 */}
+              {locationLoading ? (
+                <div className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-full bg-app-surface border border-app-secondary/20 text-app-secondary text-xs font-medium animate-pulse">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="hidden sm:inline">Recherche...</span>
+                </div>
+              ) : locationError ? (
+                <button 
+                  onClick={() => requestLocation(true)}
+                  className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-full bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors cursor-pointer text-xs font-medium"
+                  title="Erreur GPS - Cliquez pour réessayer"
+                >
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Erreur GPS</span>
+                </button>
+              ) : latitude && longitude ? (
+                <div 
+                  className="flex items-center gap-1.5 px-2 md:px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-100 text-xs font-medium" 
+                  title="Position acquise avec succès"
+                >
+                  <MapPin className="h-4 w-4" />
+                  <span className="hidden sm:inline">Position active</span>
+                </div>
+              ) : null}
+              {/* 🌟 FIN INDICATEUR GPS 🌟 */}
+
+
               <button className="p-2 rounded-xl border border-app-secondary/20 bg-app-surface hover:bg-app-card transition-all cursor-pointer">
                 <Bell className="h-4 w-4 text-app-primary" />
               </button>
+              
               <div className="h-8 w-px bg-app-secondary/20 mx-1 hidden sm:block" />
               
               {/* ZONE DU PROFIL */}
@@ -93,7 +127,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                   </div>
                 </div>
 
-                {/* Calque invisible CORRIGÉ pour forcer la fermeture au clic à l'extérieur */}
+                {/* Calque invisible pour forcer la fermeture au clic à l'extérieur */}
                 {isProfileOpen && (
                   <div 
                     className="fixed inset-0 w-screen h-screen z-40 cursor-default" 
@@ -105,7 +139,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-72 rounded-2xl bg-app-surface border border-app-secondary/20 shadow-2xl z-50 overflow-hidden origin-top-right animate-in fade-in zoom-in-95 duration-200">
                     
-                    {/* ── NOUVEAU : BOUTON FERMER (CROIX) ── */}
+                    {/* BOUTON FERMER (CROIX) */}
                     <button 
                       onClick={() => setIsProfileOpen(false)}
                       className="absolute top-3 right-3 p-1.5 rounded-full bg-app-card/80 backdrop-blur-sm border border-app-secondary/10 text-app-secondary hover:text-app-primary hover:bg-app-surface transition-all z-10 cursor-pointer"
@@ -115,7 +149,6 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     </button>
 
                     {/* Header du popup avec nom et email */}
-                    {/* J'ai ajouté 'pt-8' pour laisser de la place à la croix en haut */}
                     <div className="p-5 pt-8 border-b border-app-secondary/10 bg-app-card/30 relative">
                       <div className="flex items-center gap-3 mb-1">
                         <div className="h-10 w-10 rounded-xl bg-app-accent/10 text-app-accent flex items-center justify-center font-bold text-lg shadow-sm">
@@ -169,7 +202,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           
           {/* Corps de la page */}
           <main className="flex-1 overflow-y-auto space-y-8">
-            <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
+            <div className="flex-1 p-4 md:p-6 space-y-8">
               {children}
             </div>
             {/*<ClientFooter/>*/}

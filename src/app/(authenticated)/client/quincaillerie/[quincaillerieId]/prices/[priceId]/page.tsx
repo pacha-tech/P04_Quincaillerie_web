@@ -2,7 +2,6 @@
 
 import { useEffect, useState, use } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ArrowLeft, ShoppingCart, MapPin, Star, Store, Loader2, Image as ImageIcon, AlertCircle, ArrowRight, ChevronDown, Phone, Map, Info, Search } from 'lucide-react';
 import { useCart } from '@/src/hooks/CartContext';
 import { ProductRecommended } from '@/src/types/ProductRecommended';
@@ -29,40 +28,54 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
   // État pour la barre de recherche locale
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if(product) return;
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        let currentProduct: ProductSearch | null = null;
-        const cachedProduct = sessionStorage.getItem('brixel_preloaded_product');
-        
-        if (cachedProduct) {
-          currentProduct = JSON.parse(cachedProduct) as ProductSearch;
-        } else {
-          currentProduct = await productService.getProductById(priceId);
+        setError(null);
+
+        // 1. Requêtes parallèles : Produit et Boutique en même temps
+        const [productData, storeData] = await Promise.all([
+          productService.getProductById(priceId),
+          quincaillerieService.getQuincaillerieById(quincaillerieId)
+        ]);
+
+        if (!isMounted) return;
+
+        // On met à jour l'état dès qu'on a ces infos
+        setProduct(productData);
+        setStoreDetail(storeData);
+
+        // 2. Requête chaînée : Recommandations (nécessite l'idProduct)
+        if (productData?.idProduct) {
+          const recoData = await productService.getRecommandationByProductAndStore(
+            productData.idProduct, 
+            quincaillerieId
+          );
+          
+          if (isMounted) {
+            setRecommendations(recoData);
+          }
         }
 
-        if (currentProduct) {
-          setProduct(currentProduct);
-          const [storeData, recoData] = await Promise.all([
-            quincaillerieService.getQuincaillerieById(quincaillerieId),
-            productService.getRecommandationByProductAndStore(currentProduct.idProduct, quincaillerieId)
-          ]);
-          setStoreDetail(storeData);
-          setRecommendations(recoData);
-        }
       } catch (err: any) {
-        setError(err.message || "Impossible de charger les données");
+        if (isMounted) setError(err.message || "Impossible de charger les données");
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchData();
-    return () => sessionStorage.removeItem('brixel_preloaded_product');
+
+    
+    return () => {
+      isMounted = false;
+    };
   }, [quincaillerieId, priceId]);
+
 
   const handleAddToCart = async (idPrice: string) => {
     try {

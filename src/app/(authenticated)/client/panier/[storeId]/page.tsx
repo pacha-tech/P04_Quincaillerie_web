@@ -6,25 +6,25 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { 
   ChevronLeft, Trash2, MessageSquare, Minus, Plus, Zap, 
-  AlertTriangle, CreditCard, Smartphone, Loader2, CheckCircle, XCircle 
+  AlertTriangle, Loader2, ShoppingBag, Clock, Store, ArrowRight
 } from 'lucide-react';
+import { commandeService } from '@/src/services/CommandeService';
+import { CommandeResponse } from '@/src/types/CommandeResponse';
 
 export default function CartDetailPage({ params }: { params: Promise<{ storeId: string }> }) {
   const { storeId } = use(params);
   const { items, updateQuantity, removeItem, clearCart } = useCart();
   const router = useRouter();
 
-  // ── États existants ──
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; type: 'cart' | 'item'; targetId?: string } | null>(null);
   
-  // ── ÉTATS POUR LA SIMULATION DE PAIEMENT (Brixel Pay) ──
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [paymentErrorMsg, setPaymentErrorMsg] = useState('');
+  const [orderConfirmModalOpen, setOrderConfirmModalOpen] = useState(false);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [orderSuccessModalOpen, setOrderSuccessModalOpen] = useState(false);
+  const [createdOrders, setCreatedOrders] = useState<CommandeResponse[]>([]);
 
   const storeItems = items.filter(item => item.idQuincaillerie === storeId);
-  const storeName = storeItems[0]?.storeName.split(' ')[0] || "la boutique";
+  const storeName = storeItems[0]?.storeName || "La boutique";
 
   const totalQty = storeItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = storeItems.reduce((sum, item) => {
@@ -52,331 +52,300 @@ export default function CartDetailPage({ params }: { params: Promise<{ storeId: 
     setConfirmModal(null);
   };
 
-  // ── LOGIQUE DE SIMULATION DE PAIEMENT ──
-  const openPaymentModal = () => {
-    setPaymentState('idle');
-    setPhoneNumber('');
-    setPaymentErrorMsg('');
-    setPaymentModalOpen(true);
+  const handlePlaceOrder = async () => {
+    setIsPlacingOrder(true);
+    try {
+      const response: CommandeResponse[] = await commandeService.passCommand(storeId);
+      setCreatedOrders(response);
+      setOrderConfirmModalOpen(false); 
+      setOrderSuccessModalOpen(true);  
+    } catch (error) {
+      console.error("Erreur lors de la création de la commande", error);
+    } finally {
+      setIsPlacingOrder(false);
+    }
   };
 
-  const processSimulatedPayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber || phoneNumber.length < 9) return;
-
-    // 1. On passe en mode "Chargement/Attente USSD"
-    setPaymentState('processing');
-
-    // 2. On simule le délai réseau et l'action du client sur son téléphone (4 secondes)
-    setTimeout(() => {
-      // 3. Application des "Numéros Magiques" pour les tests
-      if (phoneNumber === '600000001') {
-        setPaymentState('error');
-        setPaymentErrorMsg('Fonds insuffisants. Veuillez recharger votre compte Mobile Money.');
-      } else if (phoneNumber === '600000002') {
-        setPaymentState('error');
-        setPaymentErrorMsg('Paiement annulé. Vous avez refusé la transaction sur votre téléphone.');
-      } else {
-        // Pour tout autre numéro, on simule un succès
-        setPaymentState('success');
-      }
-    }, 4000); // 4000 millisecondes = 4 secondes
-  };
-
-  const handlePaymentSuccessClose = () => {
-    // Le paiement a réussi : on vide le panier de cette boutique, on ferme le modal et on redirige
-    clearCart(storeId);
-    setPaymentModalOpen(false);
-    // Redirection vers une page de succès globale ou historique des commandes
-    router.push('/client'); 
-  };
-
-  if (storeItems.length === 0) return null; 
+  if (storeItems.length === 0 && !orderSuccessModalOpen) return null; 
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-6 bg-app-surface min-h-screen">
+    <div className="min-h-screen bg-gray-50/50 pb-24 lg:pb-12 pt-5">
       
-      {/* Navigation Top */}
-      <div className="md:hidden flex items-center justify-between mb-6 md:mb-8">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-app-primary bg-white px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-bold text-sm">
-          <ChevronLeft className="w-4 h-4" /> Retour
-        </button>
-        <div className="text-right">
-          <p className="text-xs font-bold text-app-secondary uppercase">Panier de</p>
-          <h1 className="text-xl md:text-2xl font-black text-app-primary">{storeName}</h1>
-        </div>
-      </div>
+      {/* ── HEADER PREMIUM "FLOATING ISLAND" ── */}
+      <header className="sticky top-4 z-40 mb-8 mx-0 md:mx-2 rounded-[24px] bg-white/70 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] ring-1 ring-gray-900/5 transition-all">
+        <div className="px-4 md:px-6 h-20 md:h-24 flex items-center justify-between gap-4 bg-gradient-to-r from-white/40 to-transparent rounded-[24px]">
+          
+          <div className="flex items-center gap-4 md:gap-5">
+            {/* Bouton Retour (Mobile uniquement) */}
+            <button 
+              onClick={() => router.back()} 
+              className="md:hidden w-10 h-10 flex items-center justify-center bg-white shadow-sm border border-gray-100 rounded-full text-gray-700 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 -ml-0.5" />
+            </button>
+            
+            {/* Infos de la boutique */}
+            <div className="flex items-center gap-3 md:gap-4">
+              {/* Icône plate */}
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-app-primary/10 text-app-primary flex items-center justify-center border border-app-primary/20">
+                <Store className="w-6 h-6 md:w-7 md:h-7" />
+              </div>
+              
+              <div className="flex flex-col justify-center">
+                <span className="text-[10px] md:text-xs font-black text-app-primary/60 uppercase tracking-[0.15em] mb-0.5">
+                  Panier en cours
+                </span>
+                <h1 className="text-xl md:text-2xl font-black text-gray-900 leading-none tracking-tight truncate max-w-[150px] sm:max-w-[200px] md:max-w-[400px]">
+                  {storeName}
+                </h1>
+              </div>
+            </div>
+          </div>
 
-      <div className="flex flex-col xl:flex-row gap-8 items-start">
-        
-        {/* ── Zone Liste des Produits ── */}
-        <div className="flex-[2.5] w-full space-y-4">
-          <div className="flex justify-between items-end mb-4 border-b border-app-secondary/20 pb-3">
-            <h2 className="text-lg font-bold text-app-primary flex items-center gap-2">
-              Articles <span className="bg-app-primary/10 text-app-primary text-xs px-2 py-0.5 rounded font-bold">{storeItems.length}</span>
-            </h2>
+          {/* Badge informatif et Bouton Vider tout */}
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="hidden md:flex items-center gap-2.5 bg-gray-50/80 px-4 py-2.5 rounded-xl border border-gray-200/60 shadow-sm">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-sm font-bold text-gray-700">
+                {storeItems.length} article{storeItems.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            
             <button 
               onClick={() => setConfirmModal({ isOpen: true, type: 'cart' })}
-              className="text-app-secondary hover:text-red-500 text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="text-sm font-bold text-red-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 md:px-4 md:py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer border border-transparent hover:border-red-100"
             >
-              <Trash2 className="w-4 h-4" /> Vider le panier
+              <Trash2 className="w-4 h-4 md:w-5 md:h-5 text-red-500" />
+              <span className="hidden sm:inline">Vider tout</span>
             </button>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {storeItems.map((item) => {
-              const unitPrice = item.inPromotion && item.pricePromo ? item.pricePromo : item.price;
-              const subTotal = unitPrice * item.quantity;
+        </div>
+      </header>
 
-              return (
-                <div key={item.idPrice} className="bg-white rounded-xl p-3 md:p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-sm border border-transparent hover:border-app-secondary/20 transition-colors">
-                  
-                  {/* Image Produit */}
-                  <div className="relative w-full md:w-24 h-28 md:h-24 shrink-0 bg-gray-50 rounded-lg overflow-hidden">
-                    <Image src={item.imageUrl || '/placeholder.png'} alt={item.productName} fill className="object-cover" />
-                    {item.inPromotion && (
-                      <div className="absolute top-1 left-1 bg-app-accent text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">
-                        <Zap className="w-3 h-3" /> PROMO
-                      </div>
-                    )}
-                  </div>
+      {/* ── CONTENU PRINCIPAL ── */}
+      <div className="max-w-full mx-auto px-4 md:px-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+        
+        {/* ── COLONNE GAUCHE : LISTE DES ARTICLES ── */}
+        <div className="flex-1 w-full">
+          <div className="bg-white rounded-2xl border border-gray-200/70 shadow-sm overflow-hidden">
+            
 
-                  {/* Infos */}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-app-primary text-base md:text-lg line-clamp-2 leading-snug mb-1">{item.productName}</h4>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-app-secondary">{unitPrice.toLocaleString()} F / unité</span>
-                      {item.inPromotion && <span className="text-xs text-app-secondary/50 line-through">{item.price} F</span>}
-                    </div>
-                  </div>
+            {/* Liste compacte */}
+            <div className="divide-y divide-gray-100">
+              {storeItems.map((item) => {
+                const unitPrice = item.inPromotion && item.pricePromo ? item.pricePromo : item.price;
+                const subTotal = unitPrice * item.quantity;
 
-                  {/* Contrôles & Prix Total */}
-                  <div className="flex items-center justify-between md:justify-end gap-6 md:gap-4 md:w-48">
-                    <p className="text-lg font-black text-emerald-600 block md:hidden">{subTotal.toLocaleString()} F</p>
+                return (
+                  <div key={item.idPrice} className="p-4 md:p-5 flex flex-row items-center gap-4 md:gap-5 hover:bg-gray-50/30 transition-colors">
                     
-                    <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-                      <div className="flex items-center bg-gray-50 rounded-lg p-0.5 border border-gray-200">
-                        <button onClick={() => updateQuantity(item.idPrice, -1)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-white text-app-primary transition-colors cursor-pointer"><Minus className="w-4 h-4" /></button>
-                        <span className="w-8 text-center font-bold text-app-primary text-sm">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.idPrice, 1)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-white text-app-primary transition-colors cursor-pointer"><Plus className="w-4 h-4" /></button>
+                    {/* Image Produit */}
+                    <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                      <Image src={item.imageUrl || '/placeholder.png'} alt={item.productName} fill className="object-cover" />
+                      {item.inPromotion && (
+                        <div className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl-lg shadow-sm">
+                          <Zap className="w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Infos Principales */}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-gray-900 text-sm md:text-base leading-tight line-clamp-2 mb-1">
+                        {item.productName}
+                      </h4>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-green-600">{unitPrice.toLocaleString()} Fcfa</span>
+                        {item.inPromotion && <span className="text-xs text-gray-400 line-through">{item.price} Fcfa</span>}
                       </div>
-                      <button 
-                        onClick={() => setConfirmModal({ isOpen: true, type: 'item', targetId: item.idPrice })}
-                        className="p-2 text-app-secondary/40 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
+                    </div>
+
+                    {/* Contrôles de quantité & Total */}
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-6">
+                      
+                      {/* Sélecteur de quantité */}
+                      <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm h-9">
+                        <button onClick={() => updateQuantity(item.idPrice, -1)} className="w-9 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors rounded-l-lg border-r border-gray-100 cursor-pointer">
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="w-10 text-center font-bold text-gray-900 text-sm">{item.quantity}</span>
+                        <button onClick={() => updateQuantity(item.idPrice, 1)} className="w-9 h-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors rounded-r-lg border-l border-gray-100 cursor-pointer">
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden md:block w-28">
+                          <p className="text-base font-black text-green-600">{subTotal.toLocaleString()} Fcfa</p>
+                        </div>
+                        <button 
+                          onClick={() => setConfirmModal({ isOpen: true, type: 'item', targetId: item.idPrice })}
+                          className="w-9 h-9 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+
                     </div>
                   </div>
-                  
-                  {/* Prix total (Desktop) */}
-                  <div className="hidden md:block w-28 text-right">
-                    <p className="text-xl font-black text-emerald-600">{subTotal.toLocaleString()} F</p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* ── Zone Devis ── */}
-        <div className="w-full xl:w-[380px] xl:sticky xl:top-6">
-          <div className="bg-white rounded-2xl border border-app-secondary/10 shadow-lg p-6">
-            <h3 className="text-app-primary text-lg font-black mb-6 border-b border-gray-100 pb-4">
-              Résumé de la commande
-            </h3>
+        {/* ── COLONNE DROITE : RÉSUMÉ (Maintenu en position fixe) ── */}
+        <div className="w-full lg:w-[360px] shrink-0 sticky top-50">
+          <div className="bg-white rounded-2xl border border-gray-200/70 shadow-lg shadow-gray-200/40 p-5 md:p-6">
+            <h3 className="text-lg font-black text-gray-900 mb-5">Récapitulatif</h3>
             
-            <div className="space-y-4 text-sm font-medium text-app-secondary mb-6">
-              <div className="flex justify-between items-end">
-                <span>Articles ({totalQty})</span>
-                <span className="text-app-primary font-bold">{totalAmount.toLocaleString()} F</span>
+            <div className="space-y-3.5 text-sm font-medium mb-6">
+              <div className="flex justify-between items-center text-gray-600">
+                <span>{totalQty} Produit{totalQty > 1 ? 's' : ''}</span>
+                <span className="text-green-600 font-bold">{totalAmount.toLocaleString()} Fcfa</span>
               </div>
-              <div className="flex justify-between items-end">
+              <div className="flex justify-between items-center text-gray-600">
                 <span>Frais de livraison</span>
-                <span className="text-app-accent font-bold text-xs bg-app-accent/10 px-2 py-1 rounded">À négocier</span>
+                <span className="bg-orange-50 text-orange-600 px-2 py-0.5 rounded text-xs font-bold border border-orange-100">À définir</span>
               </div>
             </div>
 
             <div className="border-t border-gray-100 pt-4 mb-6">
               <div className="flex justify-between items-end">
-                <span className="text-app-secondary font-bold uppercase text-xs">Total estimé</span>
-                <span className="text-3xl font-black text-app-primary">{totalAmount.toLocaleString()} F</span>
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Montant total estimé</span>
+                <span className="text-3xl font-black text-green-600 leading-none">{totalAmount.toLocaleString()} Fcfa</span>
               </div>
             </div>
 
-            {/* Nouveau bouton lié au modal de paiement */}
-            <button 
-              onClick={openPaymentModal} 
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold text-base transition-colors flex justify-center items-center gap-2 shadow-md cursor-pointer mb-3"
-            >
-              <CreditCard className="w-5 h-5" />
-              Débuter le paiement
-            </button>
+            <div className="space-y-3">
+              <button 
+                onClick={() => setOrderConfirmModalOpen(true)} 
+                className="w-full bg-app-primary hover:bg-app-primary/90 text-white h-12 rounded-xl font-bold text-sm transition-all flex justify-center items-center gap-2 shadow-sm active:scale-[0.98] cursor-pointer"
+              >
+                Passer la commande <ArrowRight className="w-4 h-4" />
+              </button>
+              
+              <button 
+                onClick={handleNegotiate} 
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 h-12 rounded-xl font-bold text-sm transition-all flex justify-center items-center gap-2 shadow-sm active:scale-[0.98] cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-app-primary" />
+                Négocier avec le vendeur
+              </button>
+            </div>
             
-            <p className="text-center text-[11px] text-app-secondary mb-3 px-2">
-              Les frais de livraison et autres détails seront négociés avec la quincaillerie.
-            </p>
-            
-            <button 
-              onClick={handleNegotiate} 
-              className=" w-full bg-white border border-app-primary text-app-primary hover:bg-app-primary/5 py-3.5 rounded-xl font-bold text-sm transition-colors flex justify-center items-center gap-2 shadow-sm cursor-pointer"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Négocier sur le Chat
-            </button>
+            <div className="mt-5 bg-blue-50/50 rounded-xl p-3 border border-blue-100/50 flex gap-3 items-start">
+              <AlertTriangle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-gray-500 leading-tight">
+                La commande sera envoyée à la quincaillerie. Vous paierez une fois la disponibilité et la livraison confirmées.
+              </p>
+            </div>
           </div>
         </div>
 
       </div>
 
-      {/* ── MODAL DE PAIEMENT SIMULÉ (Brixel Pay) ── */}
-      {paymentModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-app-primary/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      {/* ── MODAL DE CONFIRMATION DE COMMANDE ── */}
+      {orderConfirmModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-[24px] p-6 max-w-[400px] w-full shadow-2xl relative">
+            <div className="w-12 h-12 bg-app-primary/10 text-app-primary rounded-2xl flex items-center justify-center mb-5 border border-app-primary/20">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Confirmer la commande</h3>
             
-            {/* Header du Modal */}
-            <div className="bg-gray-50 border-b border-gray-100 p-5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-app-primary rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-black text-lg text-app-primary">Brixel Pay</span>
-              </div>
-              {paymentState !== 'processing' && paymentState !== 'success' && (
-                <button onClick={() => setPaymentModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1">
-                  <XCircle className="w-6 h-6" />
-                </button>
-              )}
+            <p className="text-gray-500 text-sm leading-relaxed mb-5">
+              Vous êtes sur le point d'envoyer votre demande de commande à <span className="font-bold text-gray-900">{storeName}</span> pour un total de <span className="font-bold text-gray-900">{totalQty} article(s)</span>.
+            </p>
+
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100 flex justify-between items-center">
+              <span className="text-sm font-bold text-gray-500">Montant estimé</span>
+              <span className="text-lg font-black text-green-600">{totalAmount.toLocaleString()} FCFA</span>
             </div>
 
-            <div className="p-6 md:p-8">
-              {/* ÉTAPE 1 : SAISIE (IDLE) */}
-              {paymentState === 'idle' && (
-                <form onSubmit={processSimulatedPayment} className="space-y-6">
-                  <div className="text-center space-y-2">
-                    <h3 className="text-2xl font-black text-app-primary">{totalAmount.toLocaleString()} FCFA</h3>
-                    <p className="text-sm text-app-secondary">Paiement Mobile Money (MTN / Orange)</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-app-secondary uppercase tracking-wider">Numéro de téléphone</label>
-                    <div className="relative">
-                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input 
-                        type="tel" 
-                        required
-                        placeholder="Ex: 600000000"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl font-bold text-app-primary text-lg focus:outline-none focus:ring-2 focus:ring-app-primary/20 focus:border-app-primary transition-all"
-                      />
-                    </div>
-                    <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-[11px] font-medium mt-3 border border-blue-100">
-                      <strong>Astuces de test :</strong><br/>
-                      • 600000001 = Échec (Fonds insuffisants)<br/>
-                      • 600000002 = Échec (Annulation)<br/>
-                      • Tout autre numéro = Succès
-                    </div>
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-md active:scale-95"
-                  >
-                    Confirmer et Payer
-                  </button>
-                </form>
-              )}
-
-              {/* ÉTAPE 2 : ATTENTE USSD (PROCESSING) */}
-              {paymentState === 'processing' && (
-                <div className="py-8 flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-app-primary/20 rounded-full animate-ping"></div>
-                    <div className="relative bg-white p-4 rounded-full border-4 border-gray-50 shadow-sm">
-                      <Loader2 className="w-12 h-12 text-app-primary animate-spin" />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-app-primary mb-2">Validation en cours...</h3>
-                    <p className="text-sm text-app-secondary max-w-[250px] mx-auto">
-                      Veuillez consulter votre téléphone ({phoneNumber}) et entrer votre code PIN pour valider la transaction.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* ÉTAPE 3A : SUCCÈS (SUCCESS) */}
-              {paymentState === 'success' && (
-                <div className="py-6 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in duration-300">
-                  <div className="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircle className="w-10 h-10" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-app-primary mb-1">Paiement Réussi !</h3>
-                    <p className="text-sm text-app-secondary">
-                      Votre commande chez {storeName} a bien été payée.
-                    </p>
-                  </div>
-                  <button 
-                    onClick={handlePaymentSuccessClose}
-                    className="w-full bg-app-primary hover:bg-app-primary/90 text-white py-4 rounded-xl font-bold text-base transition-colors mt-4"
-                  >
-                    Voir mes commandes
-                  </button>
-                </div>
-              )}
-
-              {/* ÉTAPE 3B : ERREUR (ERROR) */}
-              {paymentState === 'error' && (
-                <div className="py-6 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in duration-300">
-                  <div className="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-2">
-                    <XCircle className="w-10 h-10" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-app-primary mb-1">Paiement Échoué</h3>
-                    <p className="text-sm text-red-500 font-medium bg-red-50 p-3 rounded-lg border border-red-100">
-                      {paymentErrorMsg}
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setPaymentState('idle')}
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-app-primary py-4 rounded-xl font-bold text-base transition-colors mt-4"
-                  >
-                    Réessayer
-                  </button>
-                </div>
-              )}
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setOrderConfirmModalOpen(false)} 
+                disabled={isPlacingOrder}
+                className="flex-1 py-3 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl font-bold text-sm transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handlePlaceOrder} 
+                disabled={isPlacingOrder}
+                className="flex-[1.5] py-3 bg-app-primary hover:bg-app-primary/90 text-white rounded-xl font-bold text-sm transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 cursor-pointer"
+              >
+                {isPlacingOrder ? <><Loader2 className="w-4 h-4 animate-spin" /> Envoi...</> : 'Oui, Commander'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Modal de Confirmation Suppression (Inchangé) ── */}
-      {confirmModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+      {/* ── MODAL DE SUCCÈS ── */}
+      {orderSuccessModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in zoom-in">
+          <div className="bg-white rounded-[24px] p-8 max-w-[400px] w-full shadow-2xl text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-5">
+              <Clock className="w-8 h-8" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 mb-2">Demande envoyée !</h3>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              <span className="font-bold text-gray-900">{storeName}</span> a bien reçu votre demande. Elle vérifiera la disponibilité avant de vous envoyer une facture pour le paiement.
+            </p>
+            
+            <div className="w-full bg-gray-50 border border-gray-100 rounded-xl p-4 mb-8 text-left">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-2">Références</span>
+              <div className="flex flex-col gap-1.5">
+                {createdOrders.map(cmd => (
+                  <div key={cmd.idCommande} className="text-xs font-mono font-medium text-gray-700 bg-white p-2.5 rounded-lg border border-gray-200 shadow-sm">
+                    #{cmd.idCommande.substring(0, 12).toUpperCase()}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <button 
+              onClick={() => {
+                clearCart(storeId);
+                setOrderSuccessModalOpen(false);
+                router.push('/client/commande');
+              }}
+              className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold shadow-md transition-all active:scale-[0.98] text-sm cursor-pointer"
+            >
+              Suivre mes commandes
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL DE SUPPRESSION ── */}
+      {confirmModal?.isOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] p-6 max-w-[360px] w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-bold text-app-primary mb-2">Confirmer la suppression</h3>
-            <p className="text-app-secondary text-sm mb-6">
+            <h3 className="text-lg font-black text-gray-900 mb-2">Confirmer la suppression</h3>
+            <p className="text-gray-500 text-sm mb-6">
               {confirmModal.type === 'cart' 
-                ? "Voulez-vous vraiment vider tout le panier de cette boutique ?"
-                : "Voulez-vous retirer cet article de votre panier ?"}
+                ? "Êtes-vous sûr de vouloir vider l'intégralité de ce panier ?"
+                : "Voulez-vous retirer cet article de votre liste ?"}
             </p>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex gap-3">
               <button 
                 onClick={() => setConfirmModal(null)}
-                className="px-4 py-2 text-app-primary hover:bg-gray-100 rounded-lg font-bold text-sm transition-colors"
+                className="flex-1 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl font-bold text-sm transition-colors border border-gray-200 cursor-pointer"
               >
                 Annuler
               </button>
               <button 
                 onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition-colors"
+                className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm transition-colors shadow-sm cursor-pointer"
               >
-                Oui, supprimer
+                Supprimer
               </button>
             </div>
           </div>

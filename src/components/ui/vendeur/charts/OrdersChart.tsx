@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { chartService } from '@/src/services/ChartService';
 import { CommandeStats } from '@/src/types/CommandeStats';
 import { ChevronDown } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface OrdersChartProps {
   initialJours?: number;
@@ -30,6 +31,7 @@ export default function OrdersChart({ initialJours = 1 }: OrdersChartProps) {
         const data = await chartService.getCommandeStatsChart(jours);
         setOrdersData(data);
       } catch (error) {
+        toast.error("Erreur lors de la recuperation des donnees");
         console.error("Erreur lors de la récupération des données", error);
       } finally {
         setLoading(false);

@@ -37,22 +37,30 @@ const handleApiError = (error: unknown, contextMessage: string) => {
 
 class ProductService {
 
-  async getPromotedProducts (): Promise<ProductSearch[]>{
+  async getPromotedProducts (lat?: number | null , lng?:number |null ): Promise<ProductSearch[]>{
 
     try {
-      const response = await api.get('/promotion/allProductInPromotion');
+      const params: any = {};
+      if (lat != null) params.latitude = lat;
+      if (lng != null) params.longitude = lng;
+
+      const response = await api.get('/promotion/allProductInPromotion', { params });
       return response.data;
+      
     } catch (error) {
       handleApiError(error, "la récupération des promotions");
       return [];
     }
   };
 
-  async searchProducts (query: string): Promise<ProductSearch[]> {
+  async searchProducts (query: string , latitude?: number | null, longitude?: number | null , scope?: string): Promise<ProductSearch[]> {
     try {
-      const response = await api.get(`/products/search`, {
-        params: { name: query }
-      });
+      const params: any = { name: query };
+      if (latitude != null) params.latitude = latitude;
+      if (longitude != null) params.longitude = longitude;
+      if (scope != null) params.scope = scope;
+
+      const response = await api.get(`/products/search`, { params });
       return response.data;
     } catch (error) {
       handleApiError(error, "la recherche de produits");

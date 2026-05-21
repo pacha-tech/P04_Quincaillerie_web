@@ -61,7 +61,8 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
 
   const renderIcon = (iconName: string) => {
     const Icon = ICON_MAP[iconName];
-    return Icon ? <Icon size={20} strokeWidth={2.5} /> : <span>📌</span>;
+    // Taille d'icône légèrement augmentée (22 au lieu de 20) pour équilibrer avec le texte plus grand
+    return Icon ? <Icon size={22} strokeWidth={2.5} /> : <span>📌</span>;
   };
 
   const handleLogout = () => {
@@ -75,7 +76,7 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
     <LocationProvider>
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity"
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 transition-opacity"
           onClick={closeSidebar}
           aria-hidden="true"
         />
@@ -83,7 +84,7 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
 
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-app-card/80 backdrop-blur-2xl border-r border-app-secondary/10
+          fixed top-0 left-0 h-screen w-72 md:w-64 bg-app-card/90 backdrop-blur-2xl border-r border-app-secondary/10
           flex flex-col transition-transform duration-300 ease-out z-[60] 
           ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} 
           md:translate-x-0 md:shadow-none
@@ -94,24 +95,24 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
         <div className="pt-8 pb-6 px-6 relative">
           <button 
             onClick={closeSidebar}
-            className="md:hidden absolute top-4 right-4 p-2 text-app-secondary hover:text-app-primary bg-app-surface rounded-full"
+            className="md:hidden absolute top-4 right-4 p-2.5 text-app-secondary hover:text-app-primary bg-app-surface rounded-full cursor-pointer transition-colors"
           >
-            <X size={18} />
+            <X size={24} />
           </button>
 
-          <div className="flex items-center gap-3">
-            <div className="flex flex-shrink-0 items-center justify-center w-10 h-10 rounded-xl bg-black text-white font-black text-lg shadow-lg shadow-black/10">
+          <div className="flex items-center gap-3 mt-2 md:mt-0">
+            <div className="flex flex-shrink-0 items-center justify-center w-12 h-12 md:w-10 md:h-10 rounded-xl bg-black text-white font-black text-xl md:text-lg shadow-lg shadow-black/10">
               BX
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-app-primary flex items-center gap-2">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-app-primary flex items-center gap-2">
               Brixel
-              <span className="text-[10px] font-bold bg-app-surface px-2 py-0.5 rounded-full text-app-secondary mt-1">v1.0</span>
+              <span className="text-xs font-bold bg-app-surface px-2.5 py-1 rounded-full text-app-secondary mt-1">v1.0</span>
             </h1>
           </div>
         </div>
 
         {/* Navigation Principale */}
-        <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto scrollbar-hide">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto scrollbar-hide pb-4">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
             
@@ -123,10 +124,10 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
                   if (window.innerWidth < 768) closeSidebar();
                 }}
                 className={`
-                  relative flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 group overflow-hidden
+                  relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group overflow-hidden
                   ${isActive 
                     ? 'bg-app-accent/10 text-app-accent font-bold' 
-                    : 'text-app-secondary font-medium hover:bg-app-surface/50 hover:text-app-primary'
+                    : 'text-app-secondary font-semibold hover:bg-app-surface/50 hover:text-app-primary'
                   }
                 `}
               >
@@ -137,35 +138,36 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
                 <span className="relative text-xl group-hover:scale-110 transition-transform duration-200">
                   {renderIcon(item.icon)}
                   
+                  {/* Badges repensés pour être plus visibles */}
                   {item.icon === 'shopping-cart' && uniqueStoresCount > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-app-card shadow-sm">
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white ring-2 ring-app-card shadow-sm">
                       {uniqueStoresCount}
                     </span>
                   )}
                   {item.icon === 'logs' && count > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-app-card shadow-sm">
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white ring-2 ring-app-card shadow-sm">
                       {count}
                     </span>
                   )}
                 </span>
 
-                <span className="text-sm tracking-wide">{item.label}</span>
+                <span className="text-base tracking-wide">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* Pied de la Sidebar : Bouton de Déconnexion */}
-        <div className="p-4 mt-auto border-t border-app-surface/50">
+        <div className="p-5 mt-auto border-t border-app-surface/50 shrink-0">
           <button
             onClick={() => {
               setShowLogoutModal(true);
               if (window.innerWidth < 768) closeSidebar();
             }}
-            className="flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-red-500 font-medium transition-all duration-200 hover:bg-red-50 hover:text-red-600 group cursor-pointer"
+            className="flex items-center gap-4 w-full px-4 py-3.5 rounded-xl text-red-500 font-bold transition-all duration-200 hover:bg-red-50 hover:text-red-600 group cursor-pointer"
           >
-            <LogOut size={20} strokeWidth={2.5} className="group-hover:scale-110 transition-transform duration-200" />
-            <span className="text-sm tracking-wide">Déconnexion</span>
+            <LogOut size={22} strokeWidth={2.5} className="group-hover:scale-110 transition-transform duration-200" />
+            <span className="text-base tracking-wide">Déconnexion</span>
           </button>
         </div>
       </aside>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { commandeService } from '@/src/services/CommandeService';
 import { CommandeResponse } from '@/src/types/CommandeResponse';
+import toast from 'react-hot-toast';
 
 
 export default function CartOverviewPage() {
@@ -72,9 +73,12 @@ export default function CartOverviewPage() {
       setCreatedOrders(response);
       setOrderConfirmModalOpen(false);
     
-      clearAll();
+      setOrderSuccessModalOpen(true);
+
+      //clearAll();
 
     } catch (error) {
+      toast.error("Une erreur c'est produites lorsque vous passez votre commande");
       console.error("Erreur lors de la création de la commande", error);
     } finally {
       setIsPlacingOrder(false);
@@ -101,8 +105,7 @@ export default function CartOverviewPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-6 pb-28 lg:pb-6 flex flex-col lg:flex-row gap-6 lg:gap-8 items-start relative">
       
-      {/* ── COLONNE GAUCHE (Contenu Principal) ── */}
-      {/* Le contenu des paniers s'affiche seulement si on a pas encore commandé */}
+      
       {storeCount > 0 && (
         <div className="flex-1 w-full space-y-6">
           {/* Bannière Hero */}
@@ -273,7 +276,11 @@ export default function CartOverviewPage() {
             </div>
             
             <button 
-              onClick={() => router.push('/client/commande')}
+              onClick={() =>{
+                clearAll();
+                setOrderSuccessModalOpen(false);
+                router.push('/client/commande')
+              }}
               className="w-full py-3.5 bg-app-primary text-white rounded-xl font-bold shadow-md hover:bg-app-primary/90 transition-all active:scale-95 text-sm"
             >
               Voir mes commandes

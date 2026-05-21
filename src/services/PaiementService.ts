@@ -3,7 +3,6 @@ import api from './apiConfig';
 import { NoInternetConnectionException } from '../exception/NoInternetConnectionException';
 import { UserNotConnectedException } from '../exception/UserNotConnectedException';
 import { AppException } from '../exception/AppException';
-import { PaiementDTO } from '../types/DTO/PaiementDTO';
 import { Paiement } from '../types/Paiement';
 
 
@@ -30,10 +29,10 @@ class PaiementService {
   }
 
 
-  async processPayment(paiementData: PaiementDTO): Promise<Paiement> {
+  async processPayment(idCommande: string): Promise<Paiement> {
     try {
       
-      const response = await api.post('/paiement/pay', paiementData);
+      const response = await api.post( `/paiement/pay/${idCommande}`, null);
       
       
       return response.data;

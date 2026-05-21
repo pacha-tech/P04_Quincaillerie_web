@@ -1,19 +1,18 @@
-'use client'; // Obligatoire pour l'interactivité
+'use client';
 
 import { useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation'; // 👈 Ajout de usePathname
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const router = useRouter();
-  const pathname = usePathname(); // 👈 Permet de lire l'URL actuelle
+  const pathname = usePathname();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      // 👈 LA MAGIE EST ICI :
-      // Si on est déjà dans /authenticated, on y reste. Sinon on va vers la recherche publique.
+      
       const basePath = pathname.startsWith('/client')
         ? '/client/search'
         : '/search';

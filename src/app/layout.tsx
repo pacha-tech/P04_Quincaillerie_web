@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="fr">
             <body className="antialiased bg-app-surface text-app-text-primary">
               {children}
-              <Toaster position="bottom-right" reverseOrder={false} />
+              <Toaster position="top-center" reverseOrder={false} />
             </body>
           </html> 
       </AuthProvider>

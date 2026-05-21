@@ -7,6 +7,7 @@ import { productService } from '@/src/services/ProductService';
 import { ProductSearch } from '@/src/types/productSearch';
 import { useCart } from '@/src/hooks/CartContext';
 import { useRouter } from 'next/navigation';
+import { useLocation } from '@/src/hooks/LocationContext';
 
 export default function PromotionsSection() {
   const { items, addToCart , updateQuantity } = useCart();
@@ -16,13 +17,16 @@ export default function PromotionsSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
+  const { latitude, longitude, loading: locationLoading } = useLocation();
 
   useEffect(() => {
+    if(locationLoading) return;
+
     const fetchPromotions = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await productService.getPromotedProducts();
+        const data = await productService.getPromotedProducts(latitude , longitude);
         setPromotedProducts(data);
       } catch (err: any) {
         setError(err.message || "Impossible de charger les promotions.");
@@ -31,13 +35,9 @@ export default function PromotionsSection() {
       }
     };
     fetchPromotions();
-  }, []);
+  }, [latitude , longitude , locationLoading]);
 
   const handleViewProduct = (product: ProductSearch, idQuincaillerie: string) => {
-    // 1. On stocke tout l'objet produit en cache session
-    sessionStorage.setItem('brixel_preloaded_product', JSON.stringify(product));
-    
-    // 2. On navigue vers la page
     router.push(`/client/quincaillerie/${idQuincaillerie}/prices/${product.priceSearchProductsDTO[0].idPrice}`);
   };
 

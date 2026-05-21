@@ -58,6 +58,7 @@ class PromotionService {
       const response = await api.get<Promotion[]>("/promotion/allPromotion");
       console.log(response);
       return response.data.map(item => ({
+        idCampagne: item.idCampagne,
         name: item.name,
         taux: item.taux,
         dateDebut: item.dateDebut,

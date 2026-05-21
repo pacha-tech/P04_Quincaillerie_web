@@ -1,5 +1,6 @@
 
 export interface Promotion {
+  idCampagne: string;
   name: string;
   taux: string;
   dateDebut: string;

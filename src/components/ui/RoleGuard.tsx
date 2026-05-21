@@ -4,13 +4,16 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/src/hooks/AuthContext';
+import { useLocation } from '@/src/hooks/LocationContext';
 
 export default function RoleGuard({ children, allowedRole }: { children: React.ReactNode, allowedRole: string }) {
   const router = useRouter();
   const { role, isLoading } = useAuth();
+  const { requestLocation , loading } = useLocation();
 
   const [authorized, setAuthorized] = useState(false);
 
+  /*
 
   useEffect(() => {
     // On empêche le Guard de prendre une décision hâtive si le contexte n'a pas fini de charger
@@ -37,6 +40,27 @@ export default function RoleGuard({ children, allowedRole }: { children: React.R
       setAuthorized(true);
     }
   }, [router, role, isLoading, allowedRole]);
+  */
+
+  useEffect(() => {
+    if (isLoading) return; 
+
+    if (!role || role !== allowedRole) {
+      if(role !== "VISITEUR"){
+        router.push('/unauthorized');
+        return;
+      } else {
+        router.push('/login');
+        return;
+      }
+    } else {
+      setAuthorized(true);
+      
+      if (allowedRole === 'CLIENT' || allowedRole === 'VISITEUR') {
+        requestLocation();
+      }
+    }
+  }, [router, role, isLoading, allowedRole, requestLocation]);
 
   // Bloque l'affichage du HTML de la page tant qu'on n'est pas autorisé
   if (!authorized) return null; 
