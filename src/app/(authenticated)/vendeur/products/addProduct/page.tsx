@@ -46,14 +46,14 @@ export default function AddProductPage() {
       try {
         const data = await categoryService.getAllCategory();
         const formattedCategories: Category[] = data.map((item) => ({
-          id: item.id,
+          idCategory: item.idCategory,
           name: item.name,
           description: item.name,
         }));
 
         setCategories(formattedCategories);
         if (formattedCategories.length > 0) {
-          setSelectedCategory(formattedCategories[0].id);
+          setSelectedCategory(formattedCategories[0].idCategory);
         }
       } catch (e) {
         console.error('Erreur chargement catégories', e);
@@ -307,7 +307,7 @@ export default function AddProductPage() {
                   className="w-full px-3 py-2 sm:py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-blue-600 focus:bg-white focus:ring-0 outline-none transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.idCategory} value={c.idCategory}>{c.name}</option>
                   ))}
                 </select>
               </div>
