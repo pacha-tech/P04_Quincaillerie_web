@@ -30,13 +30,13 @@ class PanierService {
 
   async addProductToPanier(idPrice: string): Promise<void> {
     try {
-      await api.get('/panier/addToPanier', { params: { idPrice } });
+      await api.post('/panier/addToPanier', null, { params: { idPrice } });
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  // Renommé "From" au lieu de "To" pour une meilleure sémantique anglaise
+  
   async deleteProductFromPanier(idPrice: string): Promise<void> {
     try {
       await api.delete(`/panier/product/${idPrice}`);
@@ -53,12 +53,11 @@ class PanierService {
       }
       return 0;
     } catch (error) {
-      // Cas particulier conservé : on renvoie 0 au lieu de throw si le produit n'y est pas (404)
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return 0;
       }
       this.handleError(error);
-      return 0; // Requis par TypeScript pour garantir le retour d'un number
+      return 0;
     }
   }
 
@@ -93,7 +92,7 @@ class PanierService {
 
   async addQuantityToPanier(idPrice: string): Promise<void> {
     try {
-      await api.get('/panier/addQuantityToPanier', { params: { idPrice } });
+      await api.post('/panier/addQuantityToPanier', null, { params: { idPrice } });
     } catch (error) {
       this.handleError(error);
     }
@@ -101,12 +100,12 @@ class PanierService {
 
   async removeQuantityToPanier(idPrice: string): Promise<void> {
     try {
-      await api.get('/panier/removeQuantityToPanier', { params: { idPrice } });
+      await api.post('/panier/removeQuantityToPanier', null, { params: { idPrice } });
     } catch (error) {
       this.handleError(error);
     }
   }
 }
 
-// On exporte une instance unique (Singleton) pour l'utiliser partout facilement
+
 export const panierService = new PanierService();

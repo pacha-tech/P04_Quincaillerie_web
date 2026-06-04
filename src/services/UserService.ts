@@ -92,6 +92,8 @@ class UserService {
       throw new Error(message);
     } else if (status === 403) {
       throw new Error("Vous n'avez pas l'autorisation d'accéder à ces informations.");
+    } else if (status === 409){
+      throw new Error("un utilisateur avec cette email existe deja");
     } else {
       throw new Error("Une erreur est survenue. Réessayez plus tard.");
     }

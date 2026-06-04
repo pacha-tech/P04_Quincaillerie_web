@@ -11,6 +11,7 @@ import { UserRole } from '@/src/types/auth';
 import { signInWithCustomToken } from 'firebase/auth';
 import { authentification } from '@/src/config/firebase';
 import { useAuth } from '@/src/hooks/AuthContext';
+import toast from 'react-hot-toast';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -96,6 +97,7 @@ export default function SignUpPage() {
       localStorage.setItem('firebase_token', token);
       login(role as UserRole);
 
+      /*
       // 5. Message de succès
       await Swal.fire({
         icon: 'success',
@@ -105,17 +107,21 @@ export default function SignUpPage() {
         confirmButtonColor: '#00897B',
         allowOutsideClick: false,
       });
-      
+      */
+     toast.success(`Bienvenue ${formData.name}`);
       // 6. Redirection
       router.push('/client');
       
     } catch (error: any) {
+      /*
       Swal.fire({
         icon: 'error',
         title: 'Oups !',
         text: error.response?.data?.message || error.message || "Une erreur s'est produite lors de l'inscription.",
         confirmButtonColor: '#E53935',
       });
+      */
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }

@@ -326,12 +326,154 @@ export default function VendeurOrdersPage() {
               )}
             </div>
 
-            {/* DÉTAILS DE LA COMMANDE */}
+            {selectedOrder && (
+              <div className="w-full lg:w-2/5 xl:w-1/3 bg-white rounded-2xl border border-slate-200 shadow-xl lg:sticky lg:top-8 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col max-h-[100vh] lg:max-h-[800px]">
+                
+                {/* En-tête compact */}
+                <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    {/* FLÈCHE DE RETOUR SUR MOBILE */}
+                    <button 
+                      onClick={() => setSelectedOrder(null)}
+                      className="lg:hidden p-2 -ml-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Fiche Commande</p>
+                      <h2 className="text-sm md:text-base font-black text-slate-900">#{selectedOrder.idCommande}</h2>
+                    </div>
+                  </div>
+                  <div>
+                    {getStatusBadge(selectedOrder.statut)}
+                  </div>
+                </div>
+
+                {/* Corps scrollable si besoin */}
+                <div className="p-4 md:p-5 flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden pb-20 lg:pb-5">
+                  
+                  {/* Info Client ET Saisie OTP */}
+                  <div className="mb-5 flex flex-col xl:flex-row xl:items-center justify-between gap-3 p-3.5 bg-indigo-50/30 rounded-xl border border-indigo-50">
+                    <div className="flex flex-col gap-1.5">
+                      {/* Ligne du haut : Lettre + Nom */}
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black text-xs uppercase shrink-0">
+                          {selectedOrder.clientName?.charAt(0) || "C"}
+                        </div>
+                        <p className="text-sm font-black text-slate-900">
+                          {selectedOrder.clientName || "Client Particulier"}
+                        </p>
+                      </div>
+                      {/* Ligne du bas : La date */}
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">
+                        {formatFullDate(selectedOrder.dateCommande)}
+                      </p>
+                    </div>
+
+                    {/* Bloc validation OTP visible uniquement si la commande est payée */}
+                    {selectedOrder.statut === StatutCommande.PAYEE && (
+                      <div className="flex items-center gap-2 border-t xl:border-t-0 xl:border-l border-indigo-100 pt-3 xl:pt-0 xl:pl-4 w-full xl:w-auto">
+                        <input
+                          type="text"
+                          placeholder="Code"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                          className="w-full xl:w-24 px-3 py-1.5 text-sm font-black text-slate-900 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 tracking-widest text-center placeholder:tracking-normal placeholder:font-medium placeholder:text-slate-400"
+                        />
+                        <button
+                          onClick={handleValidateOtp}
+                          disabled={isValidatingOtp || otpCode.length < 6}
+                          className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-black hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                          {isValidatingOtp ? <Loader2 size={14} className="animate-spin" /> : <Key size={14} />}
+                          Valider
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Zone de retour d'erreur/succès pour l'OTP */}
+                  {otpMessage && (
+                    <div className={`mb-4 p-3 rounded-lg border flex items-start gap-2 text-xs font-bold ${
+                      otpMessage.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-700'
+                    }`}>
+                      {otpMessage.type === 'error' ? <AlertCircle size={16} className="shrink-0" /> : <CheckCircle2 size={16} className="shrink-0" />}
+                      <span className="leading-relaxed">{otpMessage.text}</span>
+                    </div>
+                  )}
+
+                  {/* Liste Articles */}
+                  {isDetailsLoading ? (
+                    <div className="py-2">
+                      <OrderDetailsSkeleton />
+                    </div>
+                    ): detailError ? (
+                      <div><ErrorState message={detailError} onRetry={() =>handleSelectOrder(selectedOrder)}/></div>
+                    ):(
+                      <div>
+                        <div className="space-y-3 mb-5">
+                          <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">Panier Client</p>
+                          {isDetailsLoading ? (
+                            <div className="py-4 text-center"><Loader2 className="animate-spin mx-auto text-indigo-400" size={24} /></div>
+                          ) : (
+                            lines.map((l, i) => (
+                              <div key={i} className="flex justify-between items-start group border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+                                <div className="pr-3">
+                                  <p className="text-sm font-black text-slate-800 mb-0.5 leading-tight">{l.nameProduct}</p>
+                                  <p className="text-xs font-bold text-slate-500">{l.quantity} × {l.price.toLocaleString()} F</p>
+                                </div>
+                                <p className="text-sm font-black text-slate-900 shrink-0 mt-0.5">{(l.price * l.quantity).toLocaleString()} F</p>
+                              </div>
+                            ))
+                          )}
+                          
+                          {/* Total */}
+                          <div className="pt-4 border-t border-dashed border-slate-200 flex justify-between items-end mt-4 bg-slate-50 p-3 rounded-xl">
+                            <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total Net</span>
+                            <span className="text-xl font-black text-indigo-600 tracking-tight">{selectedOrder.montantTotal.toLocaleString()} <span className="text-xs text-slate-400">Fcfa</span></span>
+                          </div>
+                        </div>
+
+                        {/* Actions (Valider / Annuler) */}
+                        {selectedOrder.statut === StatutCommande.EN_ATTENTE_VALIDATION && (
+                          <div className="grid grid-cols-2 gap-3 mt-6">
+                            <button onClick={() => setShowCancelModal(true)} className="py-2.5 rounded-xl border border-red-200 text-red-500 font-black text-[11px] md:text-xs uppercase tracking-widest hover:bg-red-50 transition-colors cursor-pointer">Annuler</button>
+                            <button onClick={() => setShowValidateModal(true)} className="py-2.5 rounded-xl bg-indigo-600 text-white font-black text-[11px] md:text-xs uppercase tracking-widest shadow-md hover:bg-indigo-700 transition-all active:scale-95 cursor-pointer">Valider</button>
+                          </div>
+                        )}
+
+                        {/* Message "Déjà livrée" */}
+                        {selectedOrder.statut === StatutCommande.LIVREE && (
+                          <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-center">
+                            <p className="text-xs font-black text-emerald-700 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                              <Truck size={16} /> Commande déjà livrée
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Iframe Facture */}
+                        {selectedOrder.statut === StatutCommande.PAYEE && selectedOrder.factureUrl && (
+                          <div className="mt-5 pt-5 border-t border-slate-100">
+                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                              <FileText size={14}/> Visualisation Facture
+                            </p>
+                            {/* Hauteur réduite à h-48 */}
+                            <iframe src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedOrder.factureUrl)}&embedded=true`} className="w-full h-48 rounded-xl border border-slate-200 bg-slate-50 shadow-inner" />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                </div>
+              </div>
+            )}
+
+            {/* DÉTAILS DE LA COMMANDE 
             {selectedOrder && (
               <div className="w-full lg:w-2/5 xl:w-1/3 bg-white rounded-3xl border border-slate-200 shadow-2xl lg:sticky lg:top-8 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="p-6 md:p-8 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    {/* FLÈCHE DE RETOUR SUR MOBILE */}
+                    
                     <button 
                       onClick={() => setSelectedOrder(null)}
                       className="lg:hidden p-2.5 -ml-3 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
@@ -349,19 +491,26 @@ export default function VendeurOrdersPage() {
                 </div>
 
                 <div className="p-6 md:p-8">
-                  {/* Info Client ET Saisie OTP */}
+                  
                   <div className="mb-8 flex flex-col xl:flex-row xl:items-center justify-between gap-5 p-5 bg-indigo-50/30 rounded-2xl border border-indigo-50">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black text-sm uppercase shrink-0">
-                        {selectedOrder.clientName?.charAt(0) || "C"}
+                    <div className="flex flex-col gap-2">
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black text-sm uppercase shrink-0">
+                          {selectedOrder.clientName?.charAt(0) || "C"}
+                        </div>
+                        <p className="text-sm font-black text-slate-900 mb-0.5">
+                          {selectedOrder.clientName || "Client Particulier"}
+                        </p>
                       </div>
-                      <div>
-                        <p className="text-sm font-black text-slate-900 mb-0.5">{selectedOrder.clientName || "Client Particulier"}</p>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">{formatFullDate(selectedOrder.dateCommande)}</p>
-                      </div>
+
+                      
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-tight">
+                        {formatFullDate(selectedOrder.dateCommande)}
+                      </p>
                     </div>
 
-                    {/* Bloc validation OTP visible uniquement si la commande est payée */}
+                    
                     {selectedOrder.statut === StatutCommande.PAYEE && (
                       <div className="flex items-center gap-3 border-t xl:border-t-0 xl:border-l border-indigo-100 pt-4 xl:pt-0 xl:pl-5 w-full xl:w-auto">
                         <input
@@ -383,7 +532,7 @@ export default function VendeurOrdersPage() {
                     )}
                   </div>
 
-                  {/* Zone de retour d'erreur/succès pour l'OTP */}
+                  
                   {otpMessage && (
                     <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 text-sm font-bold ${
                       otpMessage.type === 'error' ? 'bg-red-50 border-red-100 text-red-600' : 'bg-emerald-50 border-emerald-100 text-emerald-700'
@@ -393,7 +542,7 @@ export default function VendeurOrdersPage() {
                     </div>
                   )}
 
-                  {/* Liste Articles */}
+                
                   {isDetailsLoading ? (
                     <div className="py-4">
                       <OrderDetailsSkeleton />
@@ -423,7 +572,7 @@ export default function VendeurOrdersPage() {
                           </div>
                         </div>
 
-                        {/* Actions */}
+                      
                         {selectedOrder.statut === StatutCommande.EN_ATTENTE_VALIDATION && (
                           <div className="grid grid-cols-2 gap-4 mt-8">
                             <button onClick={() => setShowCancelModal(true)} className="py-4 rounded-2xl border-2 border-red-100 text-red-500 font-black text-xs md:text-sm uppercase tracking-widest hover:bg-red-50 transition-colors cursor-pointer">Annuler</button>
@@ -431,7 +580,7 @@ export default function VendeurOrdersPage() {
                           </div>
                         )}
 
-                        {/* Message "Déjà livrée" */}
+                    
                         {selectedOrder.statut === StatutCommande.LIVREE && (
                           <div className="mt-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-100 text-center">
                             <p className="text-sm font-black text-emerald-700 uppercase tracking-widest flex items-center justify-center gap-2">
@@ -453,6 +602,8 @@ export default function VendeurOrdersPage() {
                 </div>
               </div>
             )}
+            */}
+            
           </div>
         )}
       </div>

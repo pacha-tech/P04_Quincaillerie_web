@@ -10,15 +10,14 @@ import {
   MessageCircle, Wallet, ChevronRight, Bell
 } from 'lucide-react';
 import Link from 'next/link';
+// Assure-toi que ce chemin correspond bien à ton nouveau NotificationContext
 import { useNotification } from '@/src/hooks/NotificationContext';
 
-
 export default function DashboardVendeur() {
-  // État pour gérer l'onglet actif
   const [activeTab, setActiveTab] = useState<'ventes' | 'alertes' | 'atraiter'>('ventes');
   
-  // Récupération des alertes dynamiques depuis le contexte
-  const { alerts, unreadCount } = useNotification();
+  // 1. On récupère notifications (au lieu d'alerts) et unreadCount
+  const { notifications, unreadCount } = useNotification();
 
   return (
     <div className="relative pb-24 w-full overflow-clip">
@@ -59,7 +58,17 @@ export default function DashboardVendeur() {
             <StatCard title="Ventes (F CFA)" value="145 000 F" trend="+12%" isPositive={true} icon={Wallet} color="text-app-price-green" bg="bg-green-50" border="border-green-200" />
             <StatCard title="Commandes" value="12" trend="+3" isPositive={true} icon={ShoppingBag} color="text-blue-500" bg="bg-blue-50" border="border-blue-200" />
             <div className="sm:col-span-2 md:col-span-1">
-              <StatCard title="Alertes Stock" value={unreadCount > 0 ? `0${unreadCount}` : "0"} trend="Action" isPositive={false} icon={AlertTriangle} color="text-app-accent" bg="bg-red-50" border="border-red-200" />
+              {/* 2. Affichage dynamique du nombre de notifications non lues */}
+              <StatCard 
+                title="Notifications" 
+                value={unreadCount > 0 ? (unreadCount < 10 ? `0${unreadCount}` : unreadCount) : "0"} 
+                trend={unreadCount > 0 ? "À lire" : "À jour"} 
+                isPositive={unreadCount === 0} 
+                icon={Bell} 
+                color={unreadCount > 0 ? "text-app-accent" : "text-gray-400"} 
+                bg={unreadCount > 0 ? "bg-red-50" : "bg-gray-100"} 
+                border={unreadCount > 0 ? "border-red-200" : "border-gray-200"} 
+              />
             </div>
           </div>
         </div>
@@ -118,13 +127,12 @@ export default function DashboardVendeur() {
               Alertes & Suivi
               {unreadCount > 0 && (
                 <span className="bg-app-accent text-white text-[9px] px-1.5 py-0.5 rounded-full flex items-center justify-center">
-                  {unreadCount}
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
               {activeTab === 'alertes' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-app-accent rounded-t-full" />}
             </button>
 
-            {/* Le 3ème onglet pertinent pour un vendeur */}
             <button 
               onClick={() => setActiveTab('atraiter')}
               className={`relative py-4 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors whitespace-nowrap
@@ -146,29 +154,30 @@ export default function DashboardVendeur() {
                   <ActivityItem title="Ciment Portland 50kg" time="Il y a 5 min" value="+45 000 F" color="text-app-price-green" bg="bg-green-50" />
                   <ActivityItem title="Fer à béton 10mm (x10)" time="Il y a 22 min" value="+32 000 F" color="text-app-price-green" bg="bg-green-50" />
                   <ActivityItem title="Peinture Blanche 5L" time="Il y a 1 h" value="+18 000 F" color="text-app-price-green" bg="bg-green-50" />
-                  <ActivityItem title="Marteau 500g" time="Il y a 2 h" value="+3 500 F" color="text-app-price-green" bg="bg-green-50" />
-                  <ActivityItem title="Pointes 10cm (1kg)" time="Il y a 3 h" value="+1 200 F" color="text-app-price-green" bg="bg-green-50" />
                 </>
               )}
 
               {/* Contenu: Alertes & Suivi (Dynamique) */}
               {activeTab === 'alertes' && (
                 <>
-                  {alerts.length === 0 ? (
+                  {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-8 text-app-secondary">
                       <Bell className="w-8 h-8 mb-2 opacity-50" />
-                      <p className="text-sm font-medium">Aucune alerte de stock pour le moment.</p>
+                      <p className="text-sm font-medium">Aucune notification pour le moment.</p>
                       <p className="text-xs opacity-70">Tout est sous contrôle !</p>
                     </div>
                   ) : (
-                    alerts.map((alert) => (
+                    notifications.map((notif) => (
                       <ActivityItem 
-                        key={alert.id}
-                        title={alert.name} 
-                        time={`Stock restant : ${alert.Quantite} ${alert.unite}`} 
-                        value="Rupture imminente" 
-                        color="text-app-accent" 
-                        bg="bg-red-50" 
+                        key={notif.idNotification}
+                        // 3. On utilise notif.message qui contient déjà la belle phrase du backend
+                        title={notif.message} 
+                        time={notif.createdAt ? new Date(notif.createdAt).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) : 'Récent'} 
+                        // On adapte le label visuel selon le type de notification
+                        value={notif.type === 'STOCK_BAS' ? 'Stock Bas' : 'Info'} 
+                        color={notif.type === 'STOCK_BAS' ? 'text-app-accent' : 'text-blue-500'} 
+                        bg={notif.type === 'STOCK_BAS' ? 'bg-red-50' : 'bg-blue-50'} 
+                        isRead={notif.isRead} // Prop ajoutée pour gérer l'opacité
                       />
                     ))
                   )}
@@ -180,7 +189,7 @@ export default function DashboardVendeur() {
                 <>
                   <ActivityItem title="Cmd #1241 - Jean Dupont" time="Payée • En attente d'expédition" value="À Préparer" color="text-blue-500" bg="bg-blue-50" />
                   <ActivityItem title="Cmd #1240 - Marie Claire" time="Payée • En attente d'expédition" value="À Préparer" color="text-blue-500" bg="bg-blue-50" />
-                  <ActivityItem title="Cmd #1235 - Paul Biya" time="Expédiée • En cours de livraison" value="En transit" color="text-orange-500" bg="bg-orange-50" />
+                  <ActivityItem title="Cmd #1235 - Paul Ngono" time="Expédiée • En cours de livraison" value="En transit" color="text-orange-500" bg="bg-orange-50" />
                 </>
               )}
 
@@ -232,11 +241,14 @@ function ActionCard({ title, icon: Icon, href, color, bg, border }: any) {
   );
 }
 
-function ActivityItem({ title, time, value, color, bg }: any) {
+// 4. J'ai ajouté la prop `isRead` pour baisser l'opacité si la notif a été lue
+function ActivityItem({ title, time, value, color, bg, isRead = false }: any) {
   return (
-    <div className="flex items-center justify-between group p-2 hover:bg-gray-50 rounded-lg transition-colors">
+    <div className={`flex items-center justify-between group p-2 hover:bg-gray-50 rounded-lg transition-colors ${isRead ? 'opacity-60' : 'opacity-100'}`}>
       <div className="truncate pr-2">
-        <h4 className="text-[13px] md:text-sm font-bold text-app-primary group-hover:text-app-primary/80 transition-colors truncate">{title}</h4>
+        <h4 className={`text-[13px] md:text-sm font-bold group-hover:text-app-primary/80 transition-colors truncate ${isRead ? 'text-gray-600' : 'text-app-primary'}`}>
+          {title}
+        </h4>
         <p className="text-[10px] md:text-xs text-app-secondary">{time}</p>
       </div>
       <div className={`px-2.5 py-1.5 rounded-md text-[10px] md:text-xs font-bold whitespace-nowrap ${bg} ${color}`}>
