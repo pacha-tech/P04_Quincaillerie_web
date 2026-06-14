@@ -1,259 +1,578 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SalesChart from '@/src/components/ui/vendeur/charts/SalesChart';
 import OrdersChart from '@/src/components/ui/vendeur/charts/OrdersChart';
-import ViewsChart from '@/src/components/ui/vendeur/charts/ViewsChart';
-import { 
-  TrendingUp, Star, Box, ShoppingBag, AlertTriangle, 
-  PlusCircle, RefreshCw, Tag, Store, Clock, Activity,
-  MessageCircle, Wallet, ChevronRight, Bell
+import {
+  TrendingUp, Star, Box,
+  PlusCircle, RefreshCw, Tag, Store, Activity,
+  MessageCircle, Wallet, Calendar,
+  Trophy, ArrowUpRight, AlertCircle, CheckCircle2,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-// Assure-toi que ce chemin correspond bien à ton nouveau NotificationContext
 import { useNotification } from '@/src/hooks/NotificationContext';
+import { quincaillerieService } from '@/src/services/QuincaillerieService';
+import { commandeService } from '@/src/services/CommandeService';
+import { DashboardData } from '@/src/types/Dashboard';
+import { Commande } from '@/src/types/Commande';
+import { StatutCommande } from '@/src/utils/StatutCommande';
 
 export default function DashboardVendeur() {
-  const [activeTab, setActiveTab] = useState<'ventes' | 'alertes' | 'atraiter'>('ventes');
-  
-  // 1. On récupère notifications (au lieu d'alerts) et unreadCount
-  const { notifications, unreadCount } = useNotification();
+  const [period, setPeriod] = useState<number>(30); // par défaut 30 jours (ce mois-ci)
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<'mouvements' | 'preparer'>('mouvements');
+  const [chartType, setChartType] = useState<'sales' | 'orders'>('sales');
+  const [allCommandes, setAllCommandes] = useState<Commande[]>([]);
+  const [commandesATraiter, setCommandesATraiter] = useState<Commande[]>([]);
+  const [loadingCommandes, setLoadingCommandes] = useState<boolean>(true);
+
+  const { unreadCount } = useNotification();
+
+  // Mouvements récents en dur (comme demandé : stock mis, attente paiement, stock bas, etc.)
+  const hardcodedMovements = [
+    {
+      id: '1',
+      title: "Ciment Portland 50kg mis en stock",
+      time: "Il y a 5 min",
+      badge: { label: "STOCK", bg: "bg-blue-100", text: "text-blue-800" },
+      amount: null
+    },
+    {
+      id: '2',
+      title: "Cmd #1244 en attente de paiement - Marie Claire",
+      time: "Il y a 15 min",
+      badge: { label: "ATTENTE PAIEMENT", bg: "bg-yellow-100", text: "text-yellow-800" },
+      amount: 24500
+    },
+    {
+      id: '3',
+      title: "Stock bas détecté sur Fer à béton 10mm",
+      time: "Il y a 1h",
+      badge: { label: "STOCK BAS", bg: "bg-red-100", text: "text-red-800" },
+      amount: null
+    },
+    {
+      id: '4',
+      title: "Cmd #1240 validée et payée - Jean Dupont",
+      time: "Il y a 2h",
+      badge: { label: "PAYÉ", bg: "bg-green-100", text: "text-green-800" },
+      amount: 85000
+    }
+  ];
+
+  // Chargement des données du tableau de bord lors du changement de période (avec cache sessionStorage)
+  useEffect(() => {
+    let active = true;
+    const cacheKey = `brixel_dashboard_data_${period}`;
+
+    // Tenter de charger depuis le cache sessionStorage en premier (instantané)
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setDashboardData(parsed);
+        setLoading(false); // désactiver le chargement immédiatement
+      } catch (e) {
+        console.error("Erreur de parsing du cache dashboard :", e);
+      }
+    } else {
+      setLoading(true);
+    }
+
+    const fetchDashboard = async () => {
+      try {
+        setError(null);
+        const data = await quincaillerieService.getDashboard(period);
+        if (active) {
+          setDashboardData(data);
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        }
+      } catch (err: any) {
+        if (active && !cached) {
+          setError(err.message || "Impossible de charger les données du tableau de bord.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+    fetchDashboard();
+    return () => {
+      active = false;
+    };
+  }, [period]);
+
+  // Chargement des commandes payées pour le tableau "À préparer" (avec cache sessionStorage)
+  useEffect(() => {
+    let active = true;
+    const cacheKey = `brixel_commandes_all`;
+
+    // Tenter de charger depuis le cache sessionStorage en premier (instantané)
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setAllCommandes(parsed);
+        const payees = parsed.filter((cmd: Commande) => cmd.statut === StatutCommande.PAYEE);
+        setCommandesATraiter(payees);
+        setLoadingCommandes(false); // désactiver le chargement immédiatement
+      } catch (e) {
+        console.error("Erreur de parsing du cache commandes :", e);
+      }
+    } else {
+      setLoadingCommandes(true);
+    }
+
+    const fetchCommandes = async () => {
+      try {
+        const data = await commandeService.getAllCommandeByQuincaillerie();
+        if (active) {
+          // Tri par date décroissante (les plus récentes en premier)
+          const sortedData = [...data].sort(
+            (a, b) => new Date(b.dateCommande).getTime() - new Date(a.dateCommande).getTime()
+          );
+          setAllCommandes(sortedData);
+          sessionStorage.setItem(cacheKey, JSON.stringify(sortedData));
+
+          // Filtrage uniquement pour le statut PAYEE (commandes payées)
+          const payees = sortedData.filter(
+            (cmd) => cmd.statut === StatutCommande.PAYEE
+          );
+          setCommandesATraiter(payees);
+        }
+      } catch (err) {
+        console.error("Erreur lors de la récupération des commandes :", err);
+      } finally {
+        if (active) {
+          setLoadingCommandes(false);
+        }
+      }
+    };
+    fetchCommandes();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = dashboardData?.statistiquesCles;
+  const ca = stats?.chiffreAffaires;
+  const reputation = stats?.reputation;
+  const fonds = dashboardData?.fondsEnAttente ?? 0;
+
+  // Formater le montant du CA proprement
+  const formattedCA = (montant: number | undefined) => {
+    if (montant === undefined) return { value: "0", currency: "Fcfa" };
+    if (montant >= 1000000) {
+      return { value: `${(montant / 1000000).toFixed(1).replace('.', ',')}M`, currency: 'Fcfa' };
+    }
+    return { value: montant.toLocaleString('fr-FR'), currency: 'Fcfa' };
+  };
+
+  const caDisplay = formattedCA(ca?.montant);
+  const isPositiveEvolution = ca ? ca.evolutionPourcentage >= 0 : true;
+
+  // Calcul du format d'ancienneté de la commande
+  const formatTimeAgo = (dateStr: string) => {
+    const dateCmd = new Date(dateStr);
+    const diffMs = Date.now() - dateCmd.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin <= 0) return "À l'instant";
+    if (diffMin < 60) return `Il y a ${diffMin} min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `Il y a ${diffH}h`;
+    const diffJ = Math.floor(diffH / 24);
+    return `Il y a ${diffJ}j`;
+  };
 
   return (
-    <div className="relative pb-24 w-full overflow-clip">
-      
-      <main className="p-4 md:p-8 space-y-8 w-full">
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-6 lg:p-8 w-full overflow-hidden">
 
-        {/* --- STATS GLOBALES --- */}
-        <div className="grid grid-cols-3 divide-x divide-app-secondary/10 p-4 md:p-6 bg-white rounded-2xl shadow-sm border border-app-secondary/10 w-full">
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1.5 mb-2">
-              <TrendingUp className="w-4 h-4 text-app-price-green" />
-              <span className="text-[10px] md:text-xs text-app-secondary uppercase font-bold tracking-wider">CA Mois</span>
-            </div>
-            <span className="text-lg md:text-2xl font-black text-app-price-green leading-none">2,3M F</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Star className="w-4 h-4 text-app-star-yellow" />
-              <span className="text-[10px] md:text-xs text-app-secondary uppercase font-bold tracking-wider">Note</span>
-            </div>
-            <span className="text-lg md:text-2xl font-black text-app-star-yellow leading-none">4.7 ★</span>
-          </div>
-          <div className="flex flex-col items-center justify-center">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Box className="w-4 h-4 text-app-primary" />
-              <span className="text-[10px] md:text-xs text-app-secondary uppercase font-bold tracking-wider">Produits</span>
-            </div>
-            <span className="text-lg md:text-2xl font-black text-app-primary leading-none">38</span>
-          </div>
+      {/* --- EN-TÊTE --- */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-app-primary tracking-tight">Bonjour, Vendeur 👋</h1>
+          <p className="text-sm text-app-secondary mt-1">Voici ce qui se passe dans votre boutique aujourd'hui.</p>
         </div>
 
-        {/* --- AUJOURD'HUI --- */}
-        <div className="w-full">
-          <h2 className="text-sm md:text-base font-bold text-app-primary mb-4 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-app-accent" /> Aujourd'hui
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full">
-            <StatCard title="Ventes (F CFA)" value="145 000 F" trend="+12%" isPositive={true} icon={Wallet} color="text-app-price-green" bg="bg-green-50" border="border-green-200" />
-            <StatCard title="Commandes" value="12" trend="+3" isPositive={true} icon={ShoppingBag} color="text-blue-500" bg="bg-blue-50" border="border-blue-200" />
-            <div className="sm:col-span-2 md:col-span-1">
-              {/* 2. Affichage dynamique du nombre de notifications non lues */}
-              <StatCard 
-                title="Notifications" 
-                value={unreadCount > 0 ? (unreadCount < 10 ? `0${unreadCount}` : unreadCount) : "0"} 
-                trend={unreadCount > 0 ? "À lire" : "À jour"} 
-                isPositive={unreadCount === 0} 
-                icon={Bell} 
-                color={unreadCount > 0 ? "text-app-accent" : "text-gray-400"} 
-                bg={unreadCount > 0 ? "bg-red-50" : "bg-gray-100"} 
-                border={unreadCount > 0 ? "border-red-200" : "border-gray-200"} 
-              />
-            </div>
-          </div>
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2 shadow-sm hover:shadow-md transition-shadow">
+          <Calendar className="w-4 h-4 text-app-primary" />
+          <select
+            value={period}
+            onChange={(e) => setPeriod(Number(e.target.value))}
+            className="bg-transparent text-sm font-bold text-app-primary outline-none cursor-pointer"
+          >
+            <option value={1}>Aujourd'hui</option>
+            <option value={7}>7 derniers jours</option>
+            <option value={30}>Ce mois-ci</option>
+          </select>
         </div>
+      </header>
 
-        {/* --- PERFORMANCES --- */}
-        <div className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm md:text-base font-bold text-app-primary flex items-center gap-2">
-              <Activity className="w-4 h-4 text-app-accent" /> Performances
-            </h2>
-            <Link href="/vendeur/statistiques" className="flex items-center gap-1 text-xs font-bold text-app-secondary hover:text-app-primary transition-colors group">
-              Voir plus <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><SalesChart /></div>
-            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><OrdersChart /></div>
-            <div className="min-w-[85vw] md:min-w-0 w-full snap-center"><ViewsChart /></div>
-          </div>
+      {/* --- ETAT DE CHARGEMENT PRINCIPAL --- */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] w-full gap-4">
+          <Loader2 className="w-10 h-10 text-app-primary animate-spin" />
+          <p className="text-sm text-app-secondary font-medium">Chargement des données du tableau de bord...</p>
         </div>
-
-        {/* --- ACTIONS RAPIDES --- */}
-        <div className="w-full">
-          <h2 className="text-sm md:text-base font-bold text-app-primary mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-app-accent" /> Actions rapides
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 w-full">
-            <ActionCard title="Nouveau Produit" icon={PlusCircle} href="/vendeur/products/addProduct" color="text-app-primary" bg="bg-app-primary/10" border="border-app-primary/20" />
-            <ActionCard title="Mettre à jour" icon={RefreshCw} href="#" color="text-app-price-green" bg="bg-green-50" border="border-green-200" />
-            <ActionCard title="Créer Promo" icon={Tag} href="/vendeur/promotion/addPromotion" color="text-app-accent" bg="bg-red-50" border="border-red-200" />
-            <ActionCard title="Ma Boutique" icon={Store} href="#" color="text-blue-500" bg="bg-blue-50" border="border-blue-200" />
-          </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] w-full gap-4 p-6 bg-red-50 rounded-2xl border border-red-100 max-w-2xl mx-auto">
+          <AlertCircle className="w-12 h-12 text-red-500" />
+          <h3 className="text-lg font-bold text-red-800">Une erreur est survenue</h3>
+          <p className="text-sm text-red-700 text-center">{error}</p>
+          <button
+            onClick={() => setPeriod(period)}
+            className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-md transition-colors"
+          >
+            Réessayer
+          </button>
         </div>
+      ) : (
+        /* --- GRILLE PRINCIPALE (BENTO STYLE) --- */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
 
-        {/* --- SECTION TABS (Ventes, Alertes, À Traiter) --- */}
-        <div className="w-full bg-white rounded-2xl shadow-sm border border-app-secondary/10 overflow-hidden">
-          
-          {/* En-tête des onglets */}
-          <div className="flex items-center justify-around gap-6 px-5 border-b border-app-secondary/10 bg-gray-50/50 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-            
-            <button 
-              onClick={() => setActiveTab('ventes')}
-              className={`relative py-4 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors whitespace-nowrap
-                ${activeTab === 'ventes' ? 'text-app-primary' : 'text-app-secondary hover:text-app-primary/70'}`}
-            >
-              Dernières Ventes
-              {activeTab === 'ventes' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-app-primary rounded-t-full" />}
-            </button>
+          {/* COLONNE GAUCHE (8/12) : Analyses et Chiffres */}
+          <div className="lg:col-span-8 flex flex-col gap-6">
 
-            <button 
-              onClick={() => setActiveTab('alertes')}
-              className={`relative py-4 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors whitespace-nowrap flex items-center gap-2
-                ${activeTab === 'alertes' ? 'text-app-accent' : 'text-app-secondary hover:text-app-accent/70'}`}
-            >
-              Alertes & Suivi
-              {unreadCount > 0 && (
-                <span className="bg-app-accent text-white text-[9px] px-1.5 py-0.5 rounded-full flex items-center justify-center">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-              {activeTab === 'alertes' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-app-accent rounded-t-full" />}
-            </button>
-
-            <button 
-              onClick={() => setActiveTab('atraiter')}
-              className={`relative py-4 text-xs md:text-sm font-bold uppercase tracking-wider transition-colors whitespace-nowrap
-                ${activeTab === 'atraiter' ? 'text-blue-500' : 'text-app-secondary hover:text-blue-500/70'}`}
-            >
-              Commandes à traiter
-              {activeTab === 'atraiter' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 rounded-t-full" />}
-            </button>
-
-          </div>
-
-          {/* Contenu des onglets */}
-          <div className="p-5">
-            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-app-secondary/20 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full">
-              
-              {/* Contenu: Dernières Ventes */}
-              {activeTab === 'ventes' && (
-                <>
-                  <ActivityItem title="Ciment Portland 50kg" time="Il y a 5 min" value="+45 000 F" color="text-app-price-green" bg="bg-green-50" />
-                  <ActivityItem title="Fer à béton 10mm (x10)" time="Il y a 22 min" value="+32 000 F" color="text-app-price-green" bg="bg-green-50" />
-                  <ActivityItem title="Peinture Blanche 5L" time="Il y a 1 h" value="+18 000 F" color="text-app-price-green" bg="bg-green-50" />
-                </>
-              )}
-
-              {/* Contenu: Alertes & Suivi (Dynamique) */}
-              {activeTab === 'alertes' && (
-                <>
-                  {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-app-secondary">
-                      <Bell className="w-8 h-8 mb-2 opacity-50" />
-                      <p className="text-sm font-medium">Aucune notification pour le moment.</p>
-                      <p className="text-xs opacity-70">Tout est sous contrôle !</p>
+            {/* Ligne 1 : Les 3 KPIs Majeurs (Hauteur réduite à h-28 pour éviter le scroll vertical global) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Carte CA en évidence (Dark/Brand mode) */}
+              <div className="bg-app-primary rounded-2xl p-5 text-white shadow-lg relative overflow-hidden flex flex-col justify-between h-28">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                <div className="flex items-center justify-between relative z-10">
+                  <span className="text-[11px] font-bold text-white/80 uppercase tracking-wider">Chiffre d'Affaires</span>
+                  <TrendingUp className="w-4 h-4 text-app-price-green" />
+                </div>
+                <div className="relative z-10">
+                  <h2 className="text-2xl md:text-3xl font-black">
+                    {caDisplay.value} <span className="text-lg">{caDisplay.currency}</span>
+                  </h2>
+                  {ca && (
+                    <div className={`flex items-center gap-1 mt-1 text-[10px] font-medium ${isPositiveEvolution ? 'text-green-300' : 'text-red-300'}`}>
+                      <ArrowUpRight className={`w-3 h-3 ${isPositiveEvolution ? '' : 'rotate-90'}`} />
+                      <span>
+                        {isPositiveEvolution ? '+' : ''}
+                        {ca.evolutionPourcentage?.toFixed(0)}%
+                      </span>
                     </div>
-                  ) : (
-                    notifications.map((notif) => (
-                      <ActivityItem 
-                        key={notif.idNotification}
-                        // 3. On utilise notif.message qui contient déjà la belle phrase du backend
-                        title={notif.message} 
-                        time={notif.createdAt ? new Date(notif.createdAt).toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: 'short' }) : 'Récent'} 
-                        // On adapte le label visuel selon le type de notification
-                        value={notif.type === 'STOCK_BAS' ? 'Stock Bas' : 'Info'} 
-                        color={notif.type === 'STOCK_BAS' ? 'text-app-accent' : 'text-blue-500'} 
-                        bg={notif.type === 'STOCK_BAS' ? 'bg-red-50' : 'bg-blue-50'} 
-                        isRead={notif.isRead} // Prop ajoutée pour gérer l'opacité
-                      />
-                    ))
                   )}
-                </>
-              )}
+                </div>
+              </div>
 
-              {/* Contenu: Commandes à traiter */}
-              {activeTab === 'atraiter' && (
-                <>
-                  <ActivityItem title="Cmd #1241 - Jean Dupont" time="Payée • En attente d'expédition" value="À Préparer" color="text-blue-500" bg="bg-blue-50" />
-                  <ActivityItem title="Cmd #1240 - Marie Claire" time="Payée • En attente d'expédition" value="À Préparer" color="text-blue-500" bg="bg-blue-50" />
-                  <ActivityItem title="Cmd #1235 - Paul Ngono" time="Expédiée • En cours de livraison" value="En transit" color="text-orange-500" bg="bg-orange-50" />
-                </>
-              )}
+              {/* Carte Note */}
+              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-28">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-app-secondary uppercase tracking-wider">Note Moyenne</span>
+                  <Star className="w-4 h-4 text-app-star-yellow fill-app-star-yellow" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-app-primary">
+                    {reputation?.noteMoyenne !== undefined ? reputation.noteMoyenne.toFixed(1) : "0.0"}
+                    <span className="text-lg text-gray-400">/5</span>
+                  </h2>
+                  <p className="text-[10px] font-medium text-app-secondary mt-1">
+                    {reputation?.nombreAvis ?? 0} {reputation?.nombreAvis && reputation.nombreAvis > 1 ? 'avis' : 'avis'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Carte Produits */}
+              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-28">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-app-secondary uppercase tracking-wider">Produits Actifs</span>
+                  <Box className="w-4 h-4 text-blue-500" />
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black text-app-primary">{stats?.produitsActifs ?? 0}</h2>
+                  <p className="text-[10px] font-medium text-app-secondary mt-1">Produits en vente</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ligne 2 : Graphiques */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h3 className="text-lg font-black text-app-primary flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-app-accent" /> Évolution de l'activité
+                </h3>
+
+                {/* Sélecteur de Graphique */}
+                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
+                  <button
+                    onClick={() => setChartType('sales')}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${chartType === 'sales'
+                      ? 'bg-white text-app-primary shadow-sm'
+                      : 'text-app-secondary hover:text-app-primary/80'
+                      }`}
+                  >
+                    Chiffre d'affaires
+                  </button>
+                  <button
+                    onClick={() => setChartType('orders')}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${chartType === 'orders'
+                      ? 'bg-white text-app-primary shadow-sm'
+                      : 'text-app-secondary hover:text-app-primary/80'
+                      }`}
+                  >
+                    Commandes
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-[310px] w-full">
+                {chartType === 'sales' ? (
+                  <SalesChart initialJours={period} />
+                ) : (
+                  <OrdersChart initialJours={period} />
+                )}
+              </div>
+            </div>
+
+            {/* Ligne 3 : Top Produits */}
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-black text-app-primary flex items-center gap-2 mb-4">
+                <Trophy className="w-5 h-5 text-app-star-yellow" /> Top Produits
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {dashboardData?.topProduits && dashboardData.topProduits.length > 0 ? (
+                  dashboardData.topProduits.map((prod) => (
+                    <TopProductCard
+                      key={prod.idPrice}
+                      rank={prod.rang}
+                      name={prod.nom}
+                      qty={prod.quantiteVendue}
+                      trend={prod.tendance === 'HAUSSE' || prod.tendance === 'UP' ? 'up' : 'down'}
+                      imageUrl={prod.imageUrl}
+                      idPrice={prod.idPrice}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-6 text-sm text-app-secondary">
+                    Aucun produit vendu sur cette période.
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* COLONNE DROITE (4/12) : Action & Mouvements/Urgences */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+
+            {/* Le nerf de la guerre : Fonds en attente */}
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -bottom-4 opacity-10">
+                <Wallet className="w-24 h-24 text-orange-600" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
+                  <h3 className="text-xs font-bold text-orange-800 uppercase tracking-wider">Fonds en attente</h3>
+                </div>
+                <h2 className="text-2xl font-black text-orange-600 mb-1">
+                  {fonds.toLocaleString('fr-FR')} <span className="text-base">Fcfa</span>
+                </h2>
+                <p className="text-[10px] font-medium text-orange-700/80">Confirmé après livraison</p>
+              </div>
+            </div>
+
+            {/* Actions Rapides en grille compacte */}
+            <div className="grid grid-cols-2 gap-3">
+              <QuickAction icon={PlusCircle} label="Ajouter Produit" bg="bg-blue-50" color="text-blue-600" href="/vendeur/products/addProduct" />
+              <QuickAction icon={RefreshCw} label="Gérer Stock" bg="bg-green-50" color="text-green-600" href="/vendeur/products" />
+              <QuickAction icon={Tag} label="Créer Promo" bg="bg-red-50" color="text-red-600" href="/vendeur/promotion/addPromotion" />
+              <QuickAction icon={Store} label="Ma Boutique" bg="bg-gray-100" color="text-gray-700" href="/vendeur/boutique" />
+            </div>
+
+            {/* Widget Mouvements & Préparation (Hauteur réduite à h-[400px] pour éviter le débordement) */}
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col h-[465px]">
+
+              {/* Header avec Onglets */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-4 shrink-0">
+                <div className="flex gap-5 relative">
+                  <button
+                    onClick={() => setActiveTab('mouvements')}
+                    className={`relative text-xs font-black pb-1 transition-colors whitespace-nowrap ${activeTab === 'mouvements'
+                      ? 'text-app-primary border-b-2 border-app-primary'
+                      : 'text-app-secondary hover:text-app-primary/70'
+                      }`}
+                  >
+                    Derniers mouvements
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('preparer')}
+                    className={`relative text-xs font-black pb-1 transition-colors whitespace-nowrap ${activeTab === 'preparer'
+                      ? 'text-app-primary border-b-2 border-app-primary'
+                      : 'text-app-secondary hover:text-app-primary/70'
+                      }`}
+                  >
+                    Commandes à préparer
+                    {commandesATraiter.length > 0 && (
+                      <span className="absolute -top-1.5 -right-3 bg-red-600 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm border border-white">
+                        {commandesATraiter.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <Link
+                  href={activeTab === 'mouvements' ? '/vendeur/mouvements' : '/vendeur/commandes'}
+                  className="text-xs font-bold text-blue-500 hover:underline shrink-0"
+                >
+                  Voir tout
+                </Link>
+              </div>
+
+              {/* Contenu Défilant */}
+              <div className="flex-grow overflow-y-auto pr-1 space-y-3 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                {loadingCommandes ? (
+                  <div className="flex flex-col items-center justify-center h-full py-12 gap-2">
+                    <Loader2 className="w-6 h-6 text-app-primary animate-spin" />
+                    <p className="text-xs text-gray-400">Chargement...</p>
+                  </div>
+                ) : activeTab === 'mouvements' ? (
+                  hardcodedMovements.map((item) => (
+                    <MouvementItem
+                      key={item.id}
+                      orderId={item.badge.label}
+                      customer={item.title}
+                      time={item.time}
+                      badge={item.badge}
+                      amount={item.amount}
+                      href="/vendeur/mouvements"
+                    />
+                  ))
+                ) : (
+                  commandesATraiter.length > 0 ? (
+                    commandesATraiter.map((cmd) => {
+                      const timeLabel = formatTimeAgo(cmd.dateCommande);
+                      return (
+                        <UrgencyItem
+                          key={cmd.idCommande}
+                          orderId={`#${cmd.idCommande.toUpperCase()}`}
+                          customer={cmd.clientName || "Client"}
+                          time={timeLabel}
+                          amount={cmd.montantTotal}
+                          href="/vendeur/commandes"
+                        />
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-12 text-sm text-app-secondary bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                      Aucune commande à préparer 🎉
+                    </div>
+                  )
+                )}
+              </div>
 
             </div>
+
           </div>
 
         </div>
+      )}
 
-      </main>
 
-      {/* --- BOUTON FLOTTANT CHAT --- */}
-      <button className="fixed bottom-6 right-4 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-app-primary text-white rounded-full shadow-lg shadow-app-primary/30 flex items-center justify-center hover:scale-105 transition-transform z-50">
-        <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
+      <button className="fixed bottom-6 right-4 md:right-8 w-14 h-14 bg-app-primary text-white rounded-full shadow-lg shadow-app-primary/30 flex items-center justify-center hover:scale-105 transition-transform z-50">
+        <MessageCircle className="w-6 h-6" />
       </button>
 
     </div>
   );
 }
 
-// --- SOUS-COMPOSANTS ---
 
-function StatCard({ title, value, trend, isPositive, icon: Icon, color, bg, border }: any) {
+function TopProductCard({ rank, name, qty, trend, imageUrl, idPrice }: any) {
   return (
-    <div className={`flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border hover:shadow-md transition-all group ${border} w-full cursor-pointer`}>
-      <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
-        <Icon className={`w-5 h-5 ${color}`} />
-      </div>
-      <div className="flex flex-col grow truncate">
-        <span className="text-[10px] md:text-xs text-app-secondary uppercase font-bold tracking-wider truncate mb-0.5">{title}</span>
-        <h3 className="text-sm md:text-lg font-black text-app-primary leading-tight truncate">{value}</h3>
-      </div>
-      <div className="ml-auto shrink-0 pl-1">
-        <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-          {trend}
+    <Link
+      href={`/vendeur/products/${idPrice}`}
+      className="flex flex-col p-3 rounded-xl bg-gray-50 border border-gray-100 hover:border-app-primary/30 hover:shadow-sm transition-all cursor-pointer"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${rank === 1 ? 'bg-yellow-100 text-yellow-700' : rank === 2 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-800'}`}>
+          #{rank}
         </span>
+        {trend === 'up' ? <TrendingUp className="w-3 h-3 text-green-500" /> : <TrendingUp className="w-3 h-3 text-red-500 rotate-180" />}
       </div>
-    </div>
-  );
-}
-
-function ActionCard({ title, icon: Icon, href, color, bg, border }: any) {
-  return (
-    <Link href={href} className={`flex items-center gap-3 p-3 bg-white rounded-xl shadow-sm border hover:shadow-md hover:border-transparent transition-all group w-full ${border}`}>
-      <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
-        <Icon className={`w-5 h-5 ${color}`} />
+      <div className="flex items-center gap-3">
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={name}
+            className="w-14 h-14 rounded-lg object-cover bg-gray-200 border border-gray-100 shrink-0"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        )}
+        <div className="truncate grow">
+          <h4 className="text-sm font-bold text-app-primary truncate">{name}</h4>
+          <p className="text-xs font-medium text-app-secondary mt-1">{qty} vendus</p>
+        </div>
       </div>
-      <span className="text-xs md:text-sm font-bold text-app-primary truncate">{title}</span>
     </Link>
   );
 }
 
-// 4. J'ai ajouté la prop `isRead` pour baisser l'opacité si la notif a été lue
-function ActivityItem({ title, time, value, color, bg, isRead = false }: any) {
+function QuickAction({ icon: Icon, label, bg, color, href }: any) {
   return (
-    <div className={`flex items-center justify-between group p-2 hover:bg-gray-50 rounded-lg transition-colors ${isRead ? 'opacity-60' : 'opacity-100'}`}>
-      <div className="truncate pr-2">
-        <h4 className={`text-[13px] md:text-sm font-bold group-hover:text-app-primary/80 transition-colors truncate ${isRead ? 'text-gray-600' : 'text-app-primary'}`}>
-          {title}
-        </h4>
-        <p className="text-[10px] md:text-xs text-app-secondary">{time}</p>
+    <Link href={href} className={`${bg} p-3 rounded-xl flex flex-col items-center justify-center gap-2 hover:brightness-95 transition-all w-full text-center`}>
+      <Icon className={`w-5 h-5 ${color}`} />
+      <span className={`text-[11px] font-bold ${color}`}>{label}</span>
+    </Link>
+  );
+}
+
+function UrgencyItem({ orderId, customer, time, amount, href }: any) {
+  return (
+    <Link href={href} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 transition-colors group cursor-pointer animate-fade-in">
+      <div className="truncate grow pr-2">
+        <div className="flex flex-col gap-1 mb-1.5">
+          <span className="text-[10px] font-bold text-gray-400">{time}</span>
+          <span className="text-xs font-black text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md break-all w-fit">
+            {orderId}
+          </span>
+        </div>
+        <p className="text-sm font-bold text-app-primary group-hover:text-blue-600 transition-colors">{customer}</p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-green-500 text-white tracking-wider shadow-sm">
+            PAYÉ
+          </span>
+          <span className="text-xs font-medium text-app-secondary">Prêt à etre livrée</span>
+        </div>
       </div>
-      <div className={`px-2.5 py-1.5 rounded-md text-[10px] md:text-xs font-bold whitespace-nowrap ${bg} ${color}`}>
-        {value}
+      {amount !== undefined && amount !== null && (
+        <div className="text-right shrink-0 pl-1">
+          <span className="text-xs font-black text-app-primary whitespace-nowrap">
+            {amount.toLocaleString('fr-FR')} Fcfa
+          </span>
+        </div>
+      )}
+    </Link>
+  );
+}
+
+function MouvementItem({ orderId, customer, time, badge, amount, href }: any) {
+  return (
+    <Link href={href} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/30 hover:bg-gray-50 transition-colors group cursor-pointer animate-fade-in">
+      <div className="truncate grow pr-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${badge.bg} ${badge.text}`}>
+            {badge.label}
+          </span>
+          <span className="text-[10px] font-bold text-gray-400">{time}</span>
+        </div>
+        <p className="text-sm font-bold text-app-primary truncate group-hover:text-blue-600 transition-colors">{customer}</p>
       </div>
-    </div>
+      {amount !== undefined && amount !== null && (
+        <div className="text-right shrink-0 pl-1 animate-fade-in">
+          <span className="text-xs font-black text-app-primary whitespace-nowrap">
+            {amount.toLocaleString('fr-FR')} Fcfa
+          </span>
+        </div>
+      )}
+    </Link>
   );
 }

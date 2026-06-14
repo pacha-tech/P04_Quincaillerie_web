@@ -39,8 +39,8 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
 
         // 1. Requêtes parallèles : Produit et Boutique en même temps
         const [productData, storeData] = await Promise.all([
-          productService.getProductById(priceId),
-          quincaillerieService.getQuincaillerieById(quincaillerieId)
+          productService.getProductSearchById(priceId),
+          quincaillerieService.getQuincaillerieByIdf(quincaillerieId)
         ]);
 
         if (!isMounted) return;

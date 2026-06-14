@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef} from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { 
-  Search, Plus, RotateCw, SlidersHorizontal, MoreVertical, 
+import {
+  Search, Plus, RotateCw, SlidersHorizontal, MoreVertical,
   Package, Edit3, Trash2, Check, X, AlertCircle, ImageOff, LayoutGrid, ListFilter, Eye,
   WifiOff, Loader2
 } from 'lucide-react';
@@ -52,7 +52,7 @@ export default function StockPage() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await productService.getProductsByQuincaillerie();
 
       const products: ProductStock[] = response.map(item => ({
@@ -67,10 +67,10 @@ export default function StockPage() {
         unit: item.unit,
         imageUrl: item.imageUrl,
         purchasePrice: item.purchasePrice,
-        descriptionProduit: item.descriptionProduit,
+        description: item.description,
         taux: item.taux
       }));
-      
+
       setProducts(products);
       const uniqueCategories = Array.from(new Set(products.map(p => p.category)));
       if (uniqueCategories.length > 0) {
@@ -90,20 +90,20 @@ export default function StockPage() {
 
   // Liste complète des catégories
   const categories = Array.from(new Set(products.map(p => p.category)));
-  
+
   // Filtrage des catégories selon la barre de recherche des catégories
-  const filteredCategories = categories.filter(cat => 
+  const filteredCategories = categories.filter(cat =>
     cat.toLowerCase().includes(categorySearchTerm.toLowerCase())
   );
 
   // Filtrage et Tri des produits
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     if (currentView === 'quincaillerie' && selectedCategory) {
       return matchesSearch && p.category === selectedCategory;
     }
-    
+
     return matchesSearch;
   }).sort((a, b) => {
     if (sortOption === 'Ordre croissant') return a.name.localeCompare(b.name);
@@ -128,7 +128,7 @@ export default function StockPage() {
 
   return (
     <div className="p-4 md:p-8 bg-gray-50 min-h-[calc(100vh-4rem)] flex flex-col h-full overflow-hidden">
-      
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 shrink-0">
         <div>
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight flex items-center gap-3">
@@ -150,19 +150,19 @@ export default function StockPage() {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 shrink-0">
-        
+
         {/* STATS DESKTOP */}
         <div className="hidden md:grid grid-cols-3 gap-4 w-auto">
           <div className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm min-w-[140px]">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Produits</p>
             <p className="text-3xl font-black text-gray-900">{totalProductsGlobal}</p>
           </div>
-          
+
           <div className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm min-w-[140px]">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">En promo</p>
             <p className="text-3xl font-black text-orange-600">{promoCountGlobal}</p>
           </div>
-          
+
           <div className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm min-w-[140px]">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Prix moyen</p>
             <p className="text-3xl font-black text-green-600">{Math.round(avgPriceGlobal)} F</p>
@@ -175,12 +175,12 @@ export default function StockPage() {
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Produits</p>
             <p className="text-2xl font-black text-gray-900">{totalProductsView}</p>
           </div>
-          
+
           <div className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">En promo</p>
             <p className="text-2xl font-black text-orange-600">{promoCountView}</p>
           </div>
-          
+
           <div className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm col-span-2 sm:col-span-1">
             <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">Prix moyen</p>
             <p className="text-2xl font-black text-green-600">{Math.round(avgPriceView)} F</p>
@@ -189,37 +189,34 @@ export default function StockPage() {
 
         {/* TABS DE VUE */}
         <div className="flex bg-gray-200/60 p-1.5 rounded-xl border border-gray-300/40 w-full md:w-auto">
-          <button 
+          <button
             onClick={() => setCurrentView('produits')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition cursor-pointer ${
-              currentView === 'produits' 
-              ? 'bg-white text-gray-900 shadow-sm' 
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition cursor-pointer ${currentView === 'produits'
+              ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
-            }`}
+              }`}
           >
             <Package className="w-4 h-4" /> Par produit
           </button>
-          <button 
+          <button
             onClick={() => setCurrentView('quincaillerie')}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition cursor-pointer ${
-              currentView === 'quincaillerie' 
-              ? 'bg-white text-gray-900 shadow-sm' 
+            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition cursor-pointer ${currentView === 'quincaillerie'
+              ? 'bg-white text-gray-900 shadow-sm'
               : 'text-gray-500 hover:text-gray-900'
-            }`}
+              }`}
           >
             <LayoutGrid className="w-4 h-4" /> Par catégorie
           </button>
         </div>
       </div>
 
-      <div className={`flex flex-col md:flex-row gap-6 bg-transparent h-full min-h-[450px] overflow-hidden ${
-        currentView === 'quincaillerie' ? 'md:items-stretch' : 'flex-col'
-      }`}>
-        
+      <div className={`flex flex-col md:flex-row gap-6 bg-transparent h-full min-h-[450px] overflow-hidden ${currentView === 'quincaillerie' ? 'md:items-stretch' : 'flex-col'
+        }`}>
+
         {/* SIDEBAR CATÉGORIES (VUE QUINCAILLERIE) */}
         {currentView === 'quincaillerie' && (
           <div className="w-full md:w-1/4 bg-white rounded-3xl border border-gray-100 p-5 shadow-sm shrink-0 flex flex-col gap-4 max-h-[400px] md:max-h-none overflow-y-auto">
-            
+
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-2">
               <h3 className="text-sm font-black uppercase text-gray-400 tracking-wider flex items-center gap-2 shrink-0">
                 <ListFilter className="w-5 h-5 text-blue-600" />
@@ -242,21 +239,19 @@ export default function StockPage() {
               {filteredCategories.length > 0 ? (
                 filteredCategories.map((cat, i) => {
                   const catProductCount = products.filter(p => p.category === cat).length;
-                  
+
                   return (
-                    <button 
+                    <button
                       key={i}
                       onClick={() => setSelectedCategory(cat)}
-                      className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-bold transition flex justify-between items-center cursor-pointer ${
-                        selectedCategory === cat 
-                        ? 'bg-blue-50/70 border border-blue-100 text-blue-700' 
+                      className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-bold transition flex justify-between items-center cursor-pointer ${selectedCategory === cat
+                        ? 'bg-blue-50/70 border border-blue-100 text-blue-700'
                         : 'text-gray-600 hover:bg-gray-50 border border-transparent'
-                      }`}
+                        }`}
                     >
                       <span className="truncate pr-2">{cat}</span>
-                      <span className={`px-2.5 py-1 rounded-full text-xs shrink-0 ${
-                        selectedCategory === cat ? 'bg-blue-200/50 text-blue-800' : 'bg-gray-100 text-gray-500'
-                      }`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs shrink-0 ${selectedCategory === cat ? 'bg-blue-200/50 text-blue-800' : 'bg-gray-100 text-gray-500'
+                        }`}>
                         {catProductCount}
                       </span>
                     </button>
@@ -273,7 +268,7 @@ export default function StockPage() {
 
         {/* ZONE PRINCIPALE - TABLEAU */}
         <div className="bg-white rounded-3xl border border-gray-100 flex flex-col h-180 overflow-y-auto shadow-sm flex-1">
-          
+
           <div className="p-4 md:p-5 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
             <div className="relative w-full max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -329,9 +324,8 @@ export default function StockPage() {
                         setSortOption(option);
                         setShowFilterMenu(false);
                       }}
-                      className={`w-full flex items-center justify-between px-5 py-3 text-sm font-semibold hover:bg-gray-50 transition text-left cursor-pointer ${
-                        sortOption === option ? 'text-blue-600 font-bold' : 'text-gray-700'
-                      }`}
+                      className={`w-full flex items-center justify-between px-5 py-3 text-sm font-semibold hover:bg-gray-50 transition text-left cursor-pointer ${sortOption === option ? 'text-blue-600 font-bold' : 'text-gray-700'
+                        }`}
                     >
                       <span>{option}</span>
                       {sortOption === option && <Check className="w-5 h-5 text-blue-600" />}
@@ -432,7 +426,7 @@ export default function StockPage() {
                         <tr key={product.idPrice || index} className="hover:bg-gray-50/50 transition-colors group">
                           <td className="p-4 md:p-5">
                             <div className="flex items-center gap-4">
-                              <div 
+                              <div
                                 onClick={() => {
                                   if (product.imageUrl) {
                                     setFullImage({ url: product.imageUrl, name: product.name });
@@ -451,7 +445,7 @@ export default function StockPage() {
                                     <ImageOff className="w-6 h-6" />
                                   </div>
                                 )}
-                                
+
                                 {hasPromo && (
                                   <div className="absolute top-0 left-0 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-br-lg">
                                     -{discount}%
@@ -515,7 +509,7 @@ export default function StockPage() {
 
                               {activeMenu === index && (
                                 <div className="absolute right-10 top-0 z-50 w-48 bg-white border border-gray-100 rounded-xl shadow-xl flex flex-col py-1 text-left">
-                                  <button className="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition duration-150 cursor-pointer">
+                                  <button onClick={() => { router.push(`/vendeur/products/updateProduct/${product.idPrice}`) }} className="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition duration-150 cursor-pointer">
                                     <Edit3 className="w-4 h-4 text-gray-400" /> Modifier
                                   </button>
                                   <button className="flex items-center gap-3 px-5 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition duration-150 cursor-pointer">
@@ -545,13 +539,13 @@ export default function StockPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            
-            <img 
-              src={fullImage.url || "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=400"} 
-              alt={fullImage.name} 
-              className="w-full max-h-[400px] object-contain rounded-2xl mb-5 border border-gray-100" 
+
+            <img
+              src={fullImage.url || "https://images.unsplash.com/photo-1620121692029-d088224ddc74?w=400"}
+              alt={fullImage.name}
+              className="w-full max-h-[400px] object-contain rounded-2xl mb-5 border border-gray-100"
             />
-            
+
             <h3 className="font-bold text-gray-900 text-lg text-center px-4">
               {fullImage.name}
             </h3>

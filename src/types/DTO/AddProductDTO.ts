@@ -7,5 +7,5 @@ export interface AddProductDTO {
   sellingPrice: string;
   stock: number;
   unite: string;
-  descriptionProduit: string;
+  description: string;
 }

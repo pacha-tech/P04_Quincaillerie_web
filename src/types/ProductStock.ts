@@ -8,7 +8,7 @@ export interface ProductStock {
   unit: string;
   sellPrice: number;
   imageUrl?: string;
-  descriptionProduit: string;
+  description: string;
   purchasePrice: number;
   pricepromo?: number;
   inPromotion: boolean;

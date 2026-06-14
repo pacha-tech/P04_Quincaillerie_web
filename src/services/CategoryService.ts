@@ -1,4 +1,4 @@
-import { Category } from "../types/Category";
+import { Category, Tracking } from "../types/Category";
 import { ProductInCategory } from "../types/ProductInCategory";
 import { ProductSearch } from "../types/productSearch";
 import api from "./apiConfig";
@@ -26,7 +26,7 @@ class CategoryService {
     }
   }
 
-  async getProductsByCategory(categoryId: string,latitude?: number | null, longitude?: number | null, scope?: string): Promise<ProductInCategory[]> {
+  async getProductsByCategory(categoryId: string, latitude?: number | null, longitude?: number | null, scope?: string): Promise<ProductInCategory[]> {
     try {
       const params: any = {};
       if (latitude != null) params.latitude = latitude;
@@ -38,6 +38,14 @@ class CategoryService {
     } catch (error) {
       this.handleError(error);
       throw new Error("Impossible de récupérer les produits de cette catégorie.");
+    }
+  }
+
+  trackCategory(tracking: Tracking): void {
+    try {
+      api.post("/category/track", tracking );
+    } catch (error: any) {
+      console.warn("Tracking échoué (ignoré) :", error.message);
     }
   }
 

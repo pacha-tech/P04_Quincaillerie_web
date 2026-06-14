@@ -1,18 +1,15 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocation } from '@/src/hooks/LocationContext';
-import { useCart } from '@/src/hooks/CartContext';
 import { categoryService } from '@/src/services/CategoryService';
 import { Category } from '@/src/types/Category';
 import { ProductInCategory } from '@/src/types/ProductInCategory';
-import { calculateDistance } from '@/src/utils/Distance';
-import toast from 'react-hot-toast';
+import ProductCard from '@/src/components/ui/client/ProductCard';
 import { 
-  MapPin, Building2, Map, Loader2, Image as ImageIcon, 
-  Search, ServerCrash, Store, Package, ArrowRight, LayoutGrid 
+  MapPin, Building2, Map, Loader2, 
+  Search, ServerCrash, LayoutGrid 
 } from 'lucide-react';
 
 const SCOPE_OPTIONS = [
@@ -23,110 +20,6 @@ const SCOPE_OPTIONS = [
   { id: 'ville', label: 'ville', icon: Building2 },
   { id: 'region', label: 'région', icon: Map },
 ];
-
-// ─── SOUS-COMPOSANT CARD (Style conservé) ───
-function CategoryProductCard({ product, userLocation }: { product: ProductInCategory; userLocation: { latitude: number | null; longitude: number | null } }) {
-    const { items, addToCart, updateQuantity } = useCart();
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-
-    const availableStock = product.stock ?? 0;
-    const cartItem = items?.find(item => item.idPrice === product.idPrice);
-    const quantityInCart = cartItem ? cartItem.quantity : 0;
-    const price = product.sellPrice || 0;
-    const pricePromo = product.pricepromo || 0;
-
-    const getDistanceLabel = () => {
-        if (userLocation.latitude && userLocation.longitude && product.latitudeQuincaillerie && product.longitudeQuincaillerie) {
-            const dist = calculateDistance(Number(userLocation.latitude), Number(userLocation.longitude), Number(product.latitudeQuincaillerie), Number(product.longitudeQuincaillerie));
-            if (dist < 1) return `${Math.round(dist * 1000)} m`;
-            return `${dist} km`;
-        }
-        return "...";
-    };
-
-    const handleViewProduct = () => {
-        sessionStorage.setItem('brixel_preloaded_product', JSON.stringify(product));
-        router.push(`/client/quincaillerie/${product.idQuincaillerie}/prices/${product.idPrice}`);
-    };
-
-    const handleAddToCart = async (e: React.MouseEvent) => {
-        e.preventDefault(); e.stopPropagation();
-        if (availableStock <= 0) { toast.error("Stock de " + product.name + " épuisé"); return; } 
-        try { setIsLoading(true); await addToCart(product.idPrice); } 
-        catch (error) { toast.error("Erreur lors de l'ajout"); } 
-        finally { setIsLoading(false); }
-    };
-
-    const handleIncrement = async (e: React.MouseEvent) => {
-        e.preventDefault(); e.stopPropagation();
-        if (quantityInCart >= availableStock) { toast.error("Stock de " + product.name + " épuisé"); return; }
-        try { setIsLoading(true); await updateQuantity(product.idPrice, 1); } 
-        finally { setIsLoading(false); }
-    };
-
-    const handleDecrement = async (e: React.MouseEvent) => {
-        e.preventDefault(); e.stopPropagation();
-        try { setIsLoading(true); await updateQuantity(product.idPrice, -1); } 
-        finally { setIsLoading(false); }
-    };
-
-    return (
-        <div className="group relative w-full overflow-hidden rounded-xl md:rounded-2xl border border-app-surface bg-app-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.99]">
-            <button onClick={handleViewProduct} className="absolute top-3 right-2.5 md:top-4 md:right-3.5 z-20 flex items-center gap-1 rounded-full bg-app-card/90 px-2 py-1 md:px-3 md:py-1.5 text-[9px] md:text-[11px] font-medium text-app-primary opacity-0 transition-all duration-700 group-hover:opacity-100 group-hover:bg-app-accent group-hover:text-app-card shadow-sm cursor-pointer">
-                Voir <ArrowRight className="h-3 w-3" />
-            </button>
-            <div className="absolute inset-0 z-10 md:hidden cursor-pointer" onClick={handleViewProduct} />
-            <div className="relative z-0 p-2.5 md:p-3.5">
-                <div className="relative mx-auto mb-2 md:mb-2.5 flex h-24 md:h-32 w-full items-center justify-center rounded-lg md:rounded-xl bg-[#F8F9FB] transition-all duration-300 group-hover:scale-102 border border-dashed border-neutral-200 overflow-hidden">
-                    {product.imageUrl ? (
-                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover mix-blend-multiply p-2" />
-                    ) : (
-                        <ImageIcon className="h-8 w-8 text-app-secondary/30" />
-                    )}
-                    {product.inPromotion && (
-                        <div className="absolute top-1.5 left-1.5 bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold z-10 shadow-sm">-{product.taux}%</div>
-                    )}
-                </div>
-                <h3 className="text-xs md:text-sm font-bold text-app-primary mb-1 md:mb-1.5 line-clamp-2 leading-tight">{product.name}</h3>
-                <p className="flex items-center text-[11px] md:text-xs font-medium text-app-secondary mb-1 line-clamp-1">
-                    <Store className="h-3 w-3 mr-1 shrink-0 text-app-accent" />{product.quincaillerieName || 'Quincaillerie'}
-                </p>
-                <div className="flex flex-wrap items-center gap-1 md:gap-1.5 text-[9px] md:text-[11px] text-app-secondary mb-0.5 md:mb-1">
-                    <span className="flex items-center gap-0.5 bg-[#F8F9FB] px-1.5 py-0.5 rounded text-amber-500 font-medium shrink-0">⭐ 4.5</span>
-                    <span className="flex items-center gap-0.5 bg-[#F8F9FB] px-1.5 py-0.5 rounded shrink-0"><MapPin className="h-2.5 w-2.5 text-app-secondary" /> {getDistanceLabel()}</span>
-                    <span className={`flex items-center gap-1 bg-[#F8F9FB] px-1.5 py-0.5 rounded shrink-0 ${availableStock <= 0 ? 'text-red-500 font-semibold' : ''}`}>
-                        <Package className="h-2.5 w-2.5" />{availableStock <= 0 ? 'Épuisé' : `${availableStock} dispo`}
-                    </span>
-                </div>
-            </div>
-            <div className="relative z-20 flex items-center justify-between border-t border-app-surface bg-[#F8F9FB]/50 px-2.5 py-2 md:px-3.5 md:py-2.5 mt-auto">
-                <div className="flex flex-col">
-                    {product.inPromotion ? (
-                        <><span className="text-[9px] md:text-[10px] text-app-secondary line-through leading-none mb-0.5">{price} FCFA</span><span className="text-xs md:text-base font-bold text-app-primary">{pricePromo} FCFA</span></>
-                    ) : (
-                        <span className="text-xs md:text-base font-bold text-app-primary">{price} FCFA</span>
-                    )}
-                </div>
-                <div className="flex-shrink-0">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center h-7 md:h-8.5 px-2"><Loader2 className="w-4 h-4 md:w-5 md:h-5 text-app-accent animate-spin" /></div>
-                    ) : availableStock <= 0 ? (
-                        <span className="inline-flex items-center justify-center h-7 md:h-8.5 rounded-full bg-gray-200/60 px-3 md:px-4 text-[10px] md:text-xs font-semibold text-gray-400 cursor-not-allowed">Rupture</span>
-                    ) : quantityInCart === 0 ? (
-                        <button onClick={handleAddToCart} className="inline-flex items-center justify-center h-7 md:h-8.5 rounded-full bg-app-primary px-3 md:px-4 text-[10px] md:text-xs font-semibold text-white transition-all duration-300 hover:bg-app-accent cursor-pointer shadow-sm hover:shadow-md">Ajouter</button>
-                    ) : (
-                        <div className="inline-flex items-center h-7 md:h-8.5 rounded-full bg-app-accent text-white shadow-sm overflow-hidden border border-app-accent">
-                            <button onClick={handleDecrement} className="px-2 md:px-3 h-full hover:bg-black/10 transition-colors flex items-center justify-center text-xs md:text-sm font-bold cursor-pointer">-</button>
-                            <span className="px-1 md:px-1.5 text-[10px] md:text-xs font-bold min-w-[16px] text-center">{quantityInCart}</span>
-                            <button onClick={handleIncrement} className="px-2 md:px-3 h-full transition-colors flex items-center justify-center text-xs md:text-sm font-bold hover:bg-black/10 cursor-pointer">+</button>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
 
 // ─── PAGE PRINCIPALE UNIFIÉE ───
 export default function MarketplacePage() {
@@ -259,10 +152,16 @@ export default function MarketplacePage() {
           ) : (
             filteredCategories.map((category) => {
               const isActive = selectedCategoryId === category.idCategory;
-              return (
+              return (    
                 <button
                   key={category.idCategory}
                   onClick={() => {
+                    
+                    categoryService.trackCategory({
+                      idCategory: category.idCategory,
+                      actionType: "VIEW_CAT"
+                    });
+                    
                     setSelectedCategoryId(category.idCategory);
                     setSearchQuery(''); 
                   }}
@@ -362,7 +261,21 @@ export default function MarketplacePage() {
 
               {/* Affichage des produits */}
               {!isLoadingProducts && filteredProducts.length > 0 && filteredProducts.map((product) => (
-                 <CategoryProductCard key={product.idPrice} product={product} userLocation={{ latitude, longitude }} />
+                 <ProductCard 
+                   key={product.idPrice}
+                   idPrice={product.idPrice}
+                   idQuincaillerie={product.idQuincaillerie}
+                   name={product.name}
+                   quincaillerieName={product.quincaillerieName}
+                   imageUrl={product.imageUrl}
+                   price={product.sellPrice}
+                   pricePromo={product.pricepromo}
+                   inPromotion={product.inPromotion}
+                   taux={product.taux}
+                   stock={product.stock}
+                   latitudeQuincaillerie={product.latitudeQuincaillerie}
+                   longitudeQuincaillerie={product.longitudeQuincaillerie}
+                 />
               ))}
 
               {/* Aucun résultat de recherche produit */}

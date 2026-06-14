@@ -16,5 +16,5 @@ export interface ProductInCategory {
   purchasePrice: number;
   pricepromo?: number;
   inPromotion: boolean;
-  taux?: number;
+  taux?: string;
 }

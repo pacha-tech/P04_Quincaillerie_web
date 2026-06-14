@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, CheckCircle, XCircle, Smartphone, AlertCircle } from 'lucide-react';
 import { paiementService } from '@/src/services/PaiementService';
+import { useAuth } from '@/src/hooks/AuthContext';
 
 interface UssdPaymentModalProps {
   transactionId: string;
@@ -13,7 +14,8 @@ interface UssdPaymentModalProps {
 export default function UssdPaymentModal({ transactionId, onClose }: UssdPaymentModalProps) {
   // États : PENDING (en attente du code PIN), SUCCESS (paiement validé), FAILED (échec ou annulation)
   const [status, setStatus] = useState<'PENDING' | 'SUCCESS' | 'FAILED'>('PENDING');
-  const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes de timeout USSD
+  const [timeLeft, setTimeLeft] = useState<number>(120);
+  const {firebaseUser} = useAuth();
 
   // 1. Gestion du compte à rebours
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function UssdPaymentModal({ transactionId, onClose }: UssdPayment
     const timerId = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
     }, 1000);
-
+ 
     return () => clearInterval(timerId);
   }, [timeLeft, status]);
 
@@ -37,8 +39,17 @@ export default function UssdPaymentModal({ transactionId, onClose }: UssdPayment
     const connectToSSE = async () => {
       try {
         // 💡 Si ton API nécessite un token (Firebase), récupère-le ici
-        // const token = await auth.currentUser?.getIdToken();
-        const token = undefined; 
+        //const token = await auth.currentUser?.getIdToken();
+        let token = undefined; 
+       if(firebaseUser){
+        token = await firebaseUser.getIdToken();
+       }
+
+       if (!token) {
+          console.error("Aucun token disponible, la requête SSE sera bloquée par le serveur.");
+          setStatus('FAILED');
+          return;
+        }
 
         await paiementService.subscribeToPaymentStatus(
           transactionId,
@@ -70,7 +81,7 @@ export default function UssdPaymentModal({ transactionId, onClose }: UssdPayment
     return () => {
       abortController.abort();
     };
-  }, [transactionId]);
+  }, [transactionId , firebaseUser]);
 
   // Formatage du timer (mm:ss)
   const formatTime = (seconds: number) => {
@@ -95,7 +106,7 @@ export default function UssdPaymentModal({ transactionId, onClose }: UssdPayment
             
             <h3 className="text-xl font-black text-gray-900 mb-2">Vérifiez votre téléphone</h3>
             <p className="text-sm text-gray-500 mb-6 font-medium">
-              Un menu s'est affiché sur votre téléphone. Veuillez entrer votre code PIN secret pour valider le paiement.
+              Un menu s'est affiché sur votre téléphone. Veuillez entrer votre code PIN secret pour valider le paiement. ou tapez #150*50# puis entrer votre code secret
             </p>
 
             <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 rounded-full border border-gray-200 mb-6 w-full">

@@ -67,8 +67,8 @@ class PaiementService {
   ): Promise<void> {
     
     // On extrait dynamiquement la baseURL de ton instance Axios "api"
-    const baseURL = api.defaults.baseURL || "http://localhost:8080";
-    const url = `${baseURL}/quincaillerie/paiementNotification/stream/${transactionId}`;
+    const baseURL = process.env.NEXT_PUBLIC_API_URL;
+    const url = `${baseURL}paiementNotification/stream/${transactionId}`;
 
     const headers: Record<string, string> = {
       'Accept': 'text/event-stream',

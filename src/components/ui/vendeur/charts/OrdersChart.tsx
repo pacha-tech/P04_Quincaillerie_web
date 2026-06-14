@@ -42,7 +42,7 @@ export default function OrdersChart({ initialJours = 1 }: OrdersChartProps) {
   }, [jours]);
 
   return (
-    <div className="w-full h-[200px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
+    <div className="w-full h-[280px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
       
       <div className="mb-2 flex items-center justify-between relative z-50">
         <h3 className="text-sm font-bold text-app-primary">Commandes</h3>

@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { LayoutGrid, AlertCircle, ArrowRight } from 'lucide-react'; // Ajout de ArrowRight
 import Link from 'next/link'; // Import de Link pour la navigation
 import { categoryService } from '@/src/services/CategoryService'; 
-import { Category } from '@/src/types/Category';
+import { Category, Tracking } from '@/src/types/Category';
+import { useRouter } from 'next/navigation';
 
 export default function CategorySection() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -28,10 +30,22 @@ export default function CategorySection() {
     fetchCategories();
   }, []);
 
+  const handleClick = (idCategory: string) => {
+
+    const track:Tracking = {
+      idCategory: idCategory,
+      actionType: "VIEW_CAT"
+    }
+
+    categoryService.trackCategory(track);
+
+    router.push(`/client/category?categoryId=${idCategory}`);
+  };
+
   return (
     <div>
       {/* ── EN-TÊTE : Titre + Bouton "Tout voir" ── */}
-      <div className="flex items-end justify-between mb-4 md:mb-6">
+      <div className="flex items-end justify-between mb-2 md:mb-3">
         <h2 className="text-xl md:text-2xl font-bold text-app-primary">Catégories populaires</h2>
         <Link 
           href="/client/category"
@@ -52,12 +66,11 @@ export default function CategorySection() {
       {isLoading && !error && (
         <div className="-mx-4 md:mx-0 overflow-hidden">
           {/* Suppression de grid, utilisation de flex avec overflow-x-auto */}
-          <div className="flex gap-3 overflow-x-auto px-4 md:px-0 pb-4 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex gap-2.5 overflow-x-auto px-4 md:px-0 pb-2 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {[1, 2, 3, 4, 5, 6].map((n) => (
-              <div key={n} className="snap-start flex-shrink-0 w-[120px] md:w-[150px] h-28 md:h-32 rounded-2xl p-3 border border-app-surface bg-app-card animate-pulse flex flex-col justify-center">
-                <div className="mb-2 h-8 w-8 rounded-xl bg-app-surface"></div>
-                <div className="h-3 w-3/4 bg-app-surface rounded mb-1"></div>
-                <div className="h-2 w-full bg-app-surface rounded"></div>
+              <div key={n} className="snap-start flex-shrink-0 w-28 md:w-36 h-10 md:h-12 rounded-xl px-3 border border-app-surface bg-app-card animate-pulse flex flex-row items-center justify-start gap-2">
+                <div className="h-6 w-6 rounded-lg bg-app-surface shrink-0 animate-pulse"></div>
+                <div className="h-2.5 w-16 bg-app-surface rounded animate-pulse"></div>
               </div>
             ))}
           </div>
@@ -67,27 +80,20 @@ export default function CategorySection() {
       {/* ── AFFICHAGE DES CATÉGORIES (SCROLL HORIZONTAL + CLIQUABLES) ── */}
       {!isLoading && !error && categories.length > 0 && (
         <div className="-mx-4 md:mx-0 overflow-hidden">
-          <div className="flex gap-3 overflow-x-auto px-4 md:px-0 pb-4 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex gap-2.5 overflow-x-auto px-4 md:px-0 pb-2 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {categories.map((category) => (
-            
-              <Link 
+              <button 
                 key={category.idCategory} 
-                href={`/client/category?categoryId=${category.idCategory}`}
-                className="group snap-start flex-shrink-0 w-[120px] md:w-[170px] h-28 md:h-32 rounded-2xl p-3 border border-app-surface bg-app-card shadow-sm transition-all duration-300 hover:-translate-y-1 active:scale-95 cursor-pointer flex flex-col justify-center"
+                onClick={() => handleClick(category.idCategory)}
+                className="group snap-start flex-shrink-0 min-w-[110px] md:min-w-[135px] h-10 md:h-12 rounded-xl px-3 border border-app-surface bg-app-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow active:scale-95 cursor-pointer flex flex-row items-center justify-start gap-2"
               >
-                <div className="flex items-center gap-3 mb-2">
-                    <div className="mb-2 flex items-center justify-center h-8 w-8 rounded-xl bg-app-surface text-app-secondary transition-colors duration-300 group-hover:bg-app-accent group-hover:text-white">
-                      <LayoutGrid className="h-4 w-4" />
-                    </div>
-                    <h3 className="text-xs md:text-sm font-semibold text-app-primary mb-0.5 line-clamp-1" title={category.name}>
-                      {category.name}
-                    </h3>
+                <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-app-surface text-app-secondary transition-colors duration-300 group-hover:bg-app-accent group-hover:text-white shrink-0">
+                  <LayoutGrid className="h-3.5 w-3.5" />
                 </div>
-                
-                <p className="text-[10px] md:text-xs text-app-secondary line-clamp-2 leading-tight" title={category.description}>
-                  {category.description}
-                </p>
-              </Link>
+                <h3 className="text-[10px] md:text-xs font-bold text-app-primary line-clamp-1 text-left" title={category.name}>
+                  {category.name}
+                </h3>
+              </button>
             ))}
           </div>
         </div>

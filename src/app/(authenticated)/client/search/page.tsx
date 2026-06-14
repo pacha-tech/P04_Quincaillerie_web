@@ -14,11 +14,16 @@ export default async function AuthSearchPage({ searchParams }: SearchProps) {
     const lng = params.lng ? Number(params.lng) : null;
     const scope = params.scope || "1km";
 
-    // Affiche le MÊME design, mais protégé par le Layout "authenticated" (avec sidebar)
+    const isWaitingForGPS = (lat === null || lng === null);
+
     return (
         <SearchPage query={query}>
             <Suspense key={`${query}-${scope}`} fallback={<SearchSkeleton />}>
+                {isWaitingForGPS ? (
+                    <SearchSkeleton />
+                ): (
                     <SearchResultsServerWrapper query={query} lat={lat} lng={lng} scope={scope} />
+                )}
             </Suspense>
         </SearchPage>
     );

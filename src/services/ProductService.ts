@@ -4,12 +4,14 @@ import { ProductRecommended } from '../types/ProductRecommended';
 import api from './apiConfig';
 import { AddProductDTO } from '../types/DTO/AddProductDTO';
 import { ProductStock } from '../types/ProductStock';
+import { ProductSuggestion } from '../types/ProductSuggestion';
+import { ProductInCategory } from '../types/ProductInCategory';
 
 
 const handleApiError = (error: unknown, contextMessage: string) => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message?: string }>;
-    
+
     if (!axiosError.response) {
       throw new Error("Vérifiez votre connexion internet.");
     }
@@ -31,29 +33,40 @@ const handleApiError = (error: unknown, contextMessage: string) => {
       throw new Error(message || `Une erreur est survenue lors de ${contextMessage}.`);
     }
   }
-  
+
   throw new Error("Erreur de traitement des données.");
 };
 
 class ProductService {
 
-  async getPromotedProducts (lat?: number | null , lng?:number |null ): Promise<ProductSearch[]>{
+  async getSuggestions(): Promise<ProductSuggestion[]> {
+    try {
+      const response = await api.get('/products/suggestions');
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération des suggestions de recherche");
+      return [];
+    }
+  }
+
+  async getPromotedProducts(lat?: number | null, lng?: number | null, scope: string = "ville"): Promise<ProductSearch[]> {
 
     try {
       const params: any = {};
       if (lat != null) params.latitude = lat;
       if (lng != null) params.longitude = lng;
+      params.scope = scope;
 
       const response = await api.get('/promotion/allProductInPromotion', { params });
       return response.data;
-      
+
     } catch (error) {
       handleApiError(error, "la récupération des promotions");
       return [];
     }
   };
 
-  async searchProducts (query: string , latitude?: number | null, longitude?: number | null , scope?: string): Promise<ProductSearch[]> {
+  async searchProducts(query: string, latitude?: number | null, longitude?: number | null, scope?: string): Promise<ProductSearch[]> {
     try {
       const params: any = { name: query };
       if (latitude != null) params.latitude = latitude;
@@ -71,16 +84,16 @@ class ProductService {
   async getProductsByQuincaillerie(): Promise<ProductStock[]> {
     try {
       const response = await api.get('/products/getStock');
-      
+
       const data = response.data.map((item: any) => ({
         ...item,
         sellPrice: typeof item.sellPrice === 'string' ? parseFloat(item.sellPrice) : (item.sellPrice || 0),
         purchasePrice: typeof item.purchasePrice === 'string' ? parseFloat(item.purchasePrice) : (item.purchasePrice || 0),
-        pricepromo: item.pricePromo 
-          ? (typeof item.pricePromo === 'string' ? parseFloat(item.pricePromo) : item.pricePromo) 
+        pricepromo: item.pricePromo
+          ? (typeof item.pricePromo === 'string' ? parseFloat(item.pricePromo) : item.pricePromo)
           : undefined,
-        taux: item.taux 
-          ? (typeof item.taux === 'string' ? parseFloat(item.taux) : item.taux) 
+        taux: item.taux
+          ? (typeof item.taux === 'string' ? parseFloat(item.taux) : item.taux)
           : undefined
       }));
 
@@ -91,7 +104,7 @@ class ProductService {
     }
   }
 
-  async getRecommandationByProductAndStore(idProduct: string, idQuincaillerie: string): Promise<ProductRecommended[]>{
+  async getRecommandationByProductAndStore(idProduct: string, idQuincaillerie: string): Promise<ProductRecommended[]> {
     try {
       const response = await api.get('/products/recommendations', {
         params: { idProduct, idQuincaillerie }
@@ -104,7 +117,7 @@ class ProductService {
   };
 
 
-  async addProduct(productData: AddProductDTO, imageFile?: File): Promise<void>{
+  async addProduct(productData: AddProductDTO, imageFile?: File): Promise<void> {
     try {
       const formData = new FormData();
 
@@ -127,7 +140,7 @@ class ProductService {
     }
   };
 
-  async updateProduct(idProduit: string, changes: Record<string, any>, imageFile?: File): Promise<void>{
+  async updateProduct(idPrice: string, changes: Record<string, any>, imageFile?: File): Promise<void> {
     try {
       const formData = new FormData();
 
@@ -146,7 +159,7 @@ class ProductService {
         formData.append("image", finalImageFile);
       }
 
-      await api.patch(`/products/${idProduit}`, formData, {
+      await api.patch(`/products/${idPrice}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -156,7 +169,7 @@ class ProductService {
     }
   };
 
-  async deleteProduct(idProduct: string): Promise<void>{
+  async deleteProduct(idProduct: string): Promise<void> {
     try {
       await api.delete(`/products/${idProduct}`);
     } catch (error) {
@@ -164,15 +177,40 @@ class ProductService {
     }
   };
 
-  async getProductById(priceId: string): Promise<ProductSearch>{
+  async getProductSearchById(priceId: string): Promise<ProductSearch> {
     try {
       const response = await api.get(`/products/getProduct/${priceId}`);
       return response.data;
     } catch (error) {
       handleApiError(error, "la récupération du produit");
-      throw error; 
+      throw error;
     }
   };
+
+  async getProductStockById(idPrice: string): Promise<ProductStock> {
+    try {
+      const response = await api.get(`/products/getProductStock/${idPrice}`);
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération du produit");
+      throw error;
+    }
+  }
+
+  async getForYouProducts(latitude?: number | null, longitude?: number | null, scope: string = "ville"): Promise<ProductInCategory[]> {
+    try {
+      const params: any = {};
+      if (latitude != null) params.latitude = latitude;
+      if (longitude != null) params.longitude = longitude;
+      if (scope != null) params.scope = scope;
+
+      const response = await api.get('/products/forYou', { params });
+      return response.data;
+    } catch (error) {
+      handleApiError(error, "la récupération de vos recommandations personnalisées");
+      return [];
+    }
+  }
 }
 
 export const productService = new ProductService();

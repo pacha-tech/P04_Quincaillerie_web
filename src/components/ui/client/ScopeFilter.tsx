@@ -7,9 +7,9 @@ import { Compass } from 'lucide-react';
 export default function ScopeFilter() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    
+
     // Récupère le scope actuel de l'URL, ou "1km" par défaut
-    const currentScope = searchParams.get('scope') || '1km';
+    const currentScope = searchParams.get('scope') || 'ville';
 
     const scopes = [
         { label: '100m', value: '100m' },
@@ -35,11 +35,10 @@ export default function ScopeFilter() {
                 <button
                     key={sc.value}
                     onClick={() => handleScopeChange(sc.value)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all shrink-0 cursor-pointer ${
-                        currentScope === sc.value
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all shrink-0 cursor-pointer ${currentScope === sc.value
                             ? 'bg-app-accent text-white shadow-sm scale-105'
                             : 'text-app-secondary hover:text-app-primary hover:bg-app-card'
-                    }`}
+                        }`}
                 >
                     {sc.label}
                 </button>

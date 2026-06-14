@@ -4,3 +4,8 @@ export interface Category {
   name: string;
   description: string;
 }
+
+export interface Tracking {
+  idCategory: string;
+  actionType: string;
+}

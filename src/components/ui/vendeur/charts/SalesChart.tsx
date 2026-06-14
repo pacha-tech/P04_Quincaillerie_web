@@ -14,7 +14,7 @@ interface SalesChartProps {
 export default function SalesChart({ initialJours = 7 }: SalesChartProps) {
   const [salesData, setSalesData] = useState<VentesStats[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   const [jours, setJours] = useState<number>(initialJours);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
@@ -42,15 +42,15 @@ export default function SalesChart({ initialJours = 7 }: SalesChartProps) {
   }, [jours]);
 
   return (
-    <div className="w-full h-[200px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
-      
+    <div className="w-full h-[280px] bg-app-card rounded-2xl p-4 shadow-sm border border-app-secondary/10 flex flex-col">
+
       <div className="mb-2 flex items-center justify-between relative z-50">
         <h3 className="text-sm font-bold text-app-primary">Chiffre d'Affaires</h3>
-        
+
         {/* Conteneur du menu personnalisé */}
         <div className="relative">
           {/* Bouton qui déclenche le menu */}
-          <button 
+          <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="flex items-center gap-1.5 text-[10px] md:text-xs font-semibold text-app-secondary bg-slate-50 border border-slate-200 rounded-lg py-1 pl-2.5 pr-2 hover:bg-slate-100 transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-app-primary/20"
           >
@@ -62,11 +62,11 @@ export default function SalesChart({ initialJours = 7 }: SalesChartProps) {
           {menuOpen && (
             <>
               {/* Overlay invisible pour fermer le menu quand on clique à côté */}
-              <div 
-                className="fixed inset-0 z-40" 
+              <div
+                className="fixed inset-0 z-40"
                 onClick={() => setMenuOpen(false)}
               ></div>
-              
+
               <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden z-50 py-1">
                 {filterOptions.map((opt) => (
                   <button
@@ -75,9 +75,8 @@ export default function SalesChart({ initialJours = 7 }: SalesChartProps) {
                       setJours(opt.value);
                       setMenuOpen(false); // On ferme après avoir cliqué
                     }}
-                    className={`w-full text-left px-3 py-2 text-[10px] md:text-xs font-semibold transition-colors hover:bg-slate-50 ${
-                      jours === opt.value ? 'text-app-primary bg-slate-50/50' : 'text-app-secondary'
-                    }`}
+                    className={`w-full text-left px-3 py-2 text-[10px] md:text-xs font-semibold transition-colors hover:bg-slate-50 ${jours === opt.value ? 'text-app-primary bg-slate-50/50' : 'text-app-secondary'
+                      }`}
                   >
                     {opt.label}
                   </button>
@@ -102,29 +101,29 @@ export default function SalesChart({ initialJours = 7 }: SalesChartProps) {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={salesData} margin={{ top: 5, right: 0, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-              
+
               <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6b7280' }} dy={10} />
-              
+
               {/* Formatage de l'axe Y pour afficher en "k" (ex: 150000 -> 150k) */}
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 10, fill: '#6b7280' }} 
-                tickFormatter={(value) => value >= 1000 ? `${value / 1000}k` : value} 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: '#6b7280' }}
+                tickFormatter={(value) => value >= 1000 ? `${value / 1000}k` : value}
               />
-              
-              <Tooltip 
+
+              <Tooltip
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                 formatter={(value: any) => [`${Number(value).toLocaleString('fr-FR')} F CFA`, "Revenus"]}
               />
-              
+
               {/* dataKey correspond au nom de la variable dans ton VentesStatsDTO backend */}
               <Area type="monotone" dataKey="chiffreAffaires" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorCa)" />
-              
+
               <defs>
                 <linearGradient id="colorCa" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                 </linearGradient>
               </defs>
             </AreaChart>
