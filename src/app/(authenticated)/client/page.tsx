@@ -264,19 +264,6 @@ function ClientDashboardInner() {
 
         {activeTab === 'enPromo' && (
           <div className="space-y-4">
-            {/* Bannière compacte */}
-            <div className="bg-gradient-to-r from-app-accent to-app-primary rounded-2xl p-4 text-white shadow-md flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-sm font-black mb-0.5">🔥 Jusqu'à -30% ce mois-ci</h2>
-                <p className="text-[11px] opacity-85">Sur les outils électriques</p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-2xl">⚡</span>
-                <button className="bg-white text-app-accent px-3 py-1.5 rounded-lg font-bold text-[11px] transition active:scale-95 whitespace-nowrap">
-                  Voir les offres
-                </button>
-              </div>
-            </div>
             <PromotionsSection scope={scope} />
           </div>
         )}

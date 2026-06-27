@@ -33,12 +33,14 @@ export default function CartDetailPage({ params }: { params: Promise<{ storeId: 
   }, 0);
 
   const handleNegotiate = () => {
+    /*
     let message = `Bonjour 👋, je souhaiterais négocier pour :\n`;
     storeItems.forEach(item => {
       message += `• ${item.productName} (Qté: ${item.quantity})\n`;
     });
     message += `\nTotal estimé : ${totalAmount} FCFA`;
     router.push(`/chat/${storeId}?msg=${encodeURIComponent(message)}`);
+    */
   };
 
   const handleConfirmDelete = () => {

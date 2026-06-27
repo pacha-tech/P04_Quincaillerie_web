@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { productService } from '@/src/services/ProductService';
 import { ProductInCategory } from '@/src/types/ProductInCategory';
 import { useLocation } from '@/src/hooks/LocationContext';
@@ -20,7 +20,6 @@ export default function PourVousSection({ scope = 'ville' }: { scope?: string })
       try {
         setIsLoading(true);
         setError(null);
-        // On envoie la localisation et le scope dynamique
         const data = await productService.getForYouProducts(latitude, longitude, scope);
         setProducts(data);
       } catch (err: any) {
@@ -40,26 +39,33 @@ export default function PourVousSection({ scope = 'ville' }: { scope?: string })
       </div>
 
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-app-accent mb-2" />
-          <span className="text-sm text-app-secondary">Recherche de vos recommandations...</span>
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
+          
+          {Array.from({ length: 12 }).map((_, index) => (
+            <ProductSkeleton key={index} />
+          ))}
         </div>
       )}
 
+      
       {error && !isLoading && (
         <div className="flex flex-col items-center p-6 bg-red-50 rounded-3xl border border-red-100 text-center">
           <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
           <p className="text-sm text-red-600 font-medium">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-3 text-xs font-bold underline text-red-700">Réessayer</button>
+          <button onClick={() => window.location.reload()} className="mt-3 text-xs font-bold underline text-red-700">
+            Réessayer
+          </button>
         </div>
       )}
 
+      
       {!isLoading && !error && products.length === 0 && (
         <div className="py-10 text-center border-2 border-dashed border-app-surface rounded-3xl">
           <p className="text-app-secondary text-sm italic">Aucun produit recommandé à proximité pour le moment.</p>
         </div>
       )}
 
+      
       {!isLoading && !error && products.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
           {products.map((product) => (
@@ -82,6 +88,25 @@ export default function PourVousSection({ scope = 'ville' }: { scope?: string })
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+
+function ProductSkeleton() {
+  return (
+    <div className="animate-pulse flex flex-col bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+      
+      <div className="w-full h-32 md:h-40 bg-gray-200 rounded-xl mb-3"></div>
+      
+      <div className="h-3 bg-gray-200 rounded-full w-1/2 mb-2"></div>
+      
+      <div className="h-4 bg-gray-200 rounded-full w-3/4 mb-3"></div>
+      
+      <div className="mt-auto pt-2 flex items-center justify-between">
+        <div className="h-5 bg-gray-200 rounded-full w-2/3"></div>
+        <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+      </div>
     </div>
   );
 }

@@ -146,8 +146,8 @@ export default function ProductCard({
 
       {/* Contenu central */}
       <div className="relative z-0 p-2.5 md:p-3.5 flex flex-col flex-grow">
-        {/* Conteneur Image */}
-        <div className="relative mx-auto mb-2 md:mb-2.5 flex h-24 md:h-32 w-full items-center justify-center rounded-lg md:rounded-xl bg-[#F8F9FB] transition-all duration-300 group-hover:scale-102 border border-dashed border-neutral-200 overflow-hidden shrink-0">
+        {/* Conteneur Image : Hauteur augmentée, marge inférieure réduite */}
+        <div className="relative mx-auto mb-1 md:mb-1.5 flex h-30 md:h-36 w-full items-center justify-center rounded-lg md:rounded-xl bg-[#F8F9FB] transition-all duration-300 group-hover:scale-102 border border-dashed border-neutral-200 overflow-hidden shrink-0">
           {imageUrl ? (
             <Image src={imageUrl} alt={name} fill className="object-cover mix-blend-multiply p-2" />
           ) : (
@@ -160,19 +160,19 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Titre */}
-        <h3 className="text-xs md:text-sm font-bold text-app-primary mb-1 md:mb-1.5 line-clamp-2 leading-tight min-h-[2.5rem] flex-grow">
+        {/* Titre : Marges inférieures réduites à mb-0 / md:mb-0.5 */}
+        <h3 className="text-xs md:text-sm font-bold text-app-primary mb-0 md:mb-0.5 line-clamp-2 leading-tight min-h-[2.25rem] flex-grow">
           {name}
         </h3>
 
-        {/* Quincaillerie */}
-        <p className="flex items-center text-[11px] md:text-xs font-medium text-app-secondary mb-1 line-clamp-1">
+        {/* Quincaillerie : Marges inférieures réduites à mb-0.5 */}
+        <p className="flex items-center text-[11px] md:text-xs font-medium text-app-secondary mb-0.5 line-clamp-1">
           <Store className="h-3 w-3 mr-1 shrink-0 text-app-accent" />
           {quincaillerieName || 'Quincaillerie'}
         </p>
 
         {/* Badges */}
-        <div className="flex flex-wrap items-center gap-1 md:gap-1.5 text-[9px] md:text-[11px] text-app-secondary mt-auto">
+        <div className="flex flex-wrap items-center gap-1 md:gap-1.5 text-[9px] md:text-[11px] text-app-secondary mt-auto pt-0.5">
           <span className="flex items-center gap-0.5 bg-[#F8F9FB] px-1.5 py-0.5 rounded text-amber-500 font-medium shrink-0">⭐ 4.5</span>
           <span className="flex items-center gap-0.5 bg-[#F8F9FB] px-1.5 py-0.5 rounded shrink-0">
             <MapPin className="h-2.5 w-2.5 text-app-secondary" /> {getDistanceLabel()}
