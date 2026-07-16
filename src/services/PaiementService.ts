@@ -8,7 +8,7 @@ import { Paiement } from '../types/Paiement';
 import { ComptePaiement } from '../types/ComptePaiement';
 
 class PaiementService {
-  
+
   // Fonction utilitaire centralisée pour gérer les erreurs Axios (DRY)
   private handleError(error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -20,25 +20,25 @@ class PaiementService {
       const message = error.response.data?.message || "Erreur inconnue lors du paiement";
 
       if (status === 401) throw new UserNotConnectedException(message);
-      
+
       throw new AppException(message || "Une erreur est survenue lors du paiement. Réessayez plus tard.");
     }
     throw new AppException("Une erreur inattendue est survenue.");
   }
 
   // 1. Initialisation de la requête de paiement direct (USSD)
-  async processPayment(idCommande: string , operator: string , phone: string): Promise<Paiement> {
+  async processPayment(idCommande: string, operator: string, phone: string): Promise<Paiement> {
     try {
-      const response = await api.post( `/paiement/pay/${idCommande}?operator=${operator}&phoneNumber=${phone}`);
+      const response = await api.post(`/paiement/pay/${idCommande}?operator=${operator}&phoneNumber=${phone}`);
       return response.data;
     } catch (error) {
       this.handleError(error);
-      throw new Error("Erreur de paiement"); 
+      throw new Error("Erreur de paiement");
     }
   }
 
   async getInfosPaiementSeller(): Promise<ComptePaiement> {
-    try{
+    try {
       const response = await api.get('/getDetailVendeur');
       return response.data;
     } catch (error) {
@@ -65,10 +65,10 @@ class PaiementService {
     signal: AbortSignal,
     token?: string | null
   ): Promise<void> {
-    
+
     // On extrait dynamiquement la baseURL de ton instance Axios "api"
     const baseURL = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${baseURL}paiementNotification/stream/${transactionId}`;
+    const url = `${baseURL}/paiementNotification/stream/${transactionId}`;
 
     const headers: Record<string, string> = {
       'Accept': 'text/event-stream',

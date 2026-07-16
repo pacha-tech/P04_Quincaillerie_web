@@ -3,7 +3,7 @@ import { authentification } from '../config/firebase';
 import { NotificationStockAlert } from '../types/NotificationStockAlert';
 
 
-const API_BASE_URL = "http://localhost:9010/quincaillerie/notifications";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Fonction utilitaire pour récupérer le token Firebase
 const getAuthToken = async (): Promise<string | null> => {
@@ -19,7 +19,7 @@ const getAuthToken = async (): Promise<string | null> => {
 };
 
 const NotificationService = {
-  
+
   // A. S'abonner au flux SSE
   subscribeToNotifications: async (
     onMessageCallback: (data: NotificationStockAlert[]) => void,
