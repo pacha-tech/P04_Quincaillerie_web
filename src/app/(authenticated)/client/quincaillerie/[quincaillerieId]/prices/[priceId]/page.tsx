@@ -4,8 +4,8 @@ import { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import {
   Star, Store, Loader2,
-  AlertCircle, Phone, MapPin, Search, Info,
-  Package, AlignLeft
+  AlertCircle, Phone, MapPin, Search, Info, X,
+  Package, AlignLeft, Image as ImageIcon
 } from 'lucide-react';
 import { useCart } from '@/src/hooks/CartContext';
 import { QuincaillerieDetail } from '@/src/types/QuincaillerieDetail';
@@ -13,10 +13,15 @@ import { ProductSearch } from '@/src/types/productSearch';
 import { productService } from '@/src/services/ProductService';
 import { quincaillerieService } from '@/src/services/QuincaillerieService';
 import ProductCard from '@/src/components/ui/client/ProductCard';
+import { useLocation } from '@/src/hooks/LocationContext';
+import { calculateDistance } from '@/src/utils/Distance';
+import toast from 'react-hot-toast';
+import { BiExit } from 'react-icons/bi';
 
 export default function QuincaillerieDetailsPage({ params }: { params: Promise<{ quincaillerieId: string; priceId: string }> }) {
   const { quincaillerieId, priceId } = use(params);
-  const { items } = useCart();
+  const { items, addToCart, updateQuantity } = useCart();
+  const { latitude: userLat, longitude: userLng } = useLocation();
 
   const [product, setProduct] = useState<ProductSearch | null>(null);
   const [storeDetail, setStoreDetail] = useState<QuincaillerieDetail | null>(null);
@@ -25,6 +30,23 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [showStoreDetails, setShowStoreDetails] = useState(false);
+
+  const getDistanceLabel = () => {
+    if (userLat && userLng && storeDetail?.latitude && storeDetail?.longitude) {
+      const dist = calculateDistance(
+        Number(userLat),
+        Number(userLng),
+        Number(storeDetail.latitude),
+        Number(storeDetail.longitude)
+      );
+      if (dist < 1) return `${Math.round(dist * 1000)} m`;
+      return `${dist.toFixed(1)} km`;
+    }
+    return "...";
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -102,22 +124,236 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
     rec.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    /* 
-      L'astuce principale est ici : 
-      On bloque le scroll de la page entière (h-[calc(100vh-80px)] ou équivalent, overflow-hidden)
-      pour pouvoir gérer le scroll indépendamment dans les colonnes.
-    */
-    <div className="bg-app-surface h-[calc(100vh-80px)] lg:h-[calc(100vh-90px)] overflow-hidden font-sans text-app-primary">
-      <main className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-6 h-full">
+  const cartItem = mainPrice ? items?.find(item => item.idPrice === mainPrice.idPrice) : null;
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start h-full">
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!mainPrice) return;
+    if ((mainPrice.stock ?? 0) <= 0) {
+      toast.error("Stock de " + product.name + " épuisé");
+      return;
+    }
+    try {
+      setIsCartLoading(true);
+      await addToCart(mainPrice.idPrice);
+    } catch (error) {
+      toast.error("Erreur lors de l'ajout");
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
+
+  const handleIncrement = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!mainPrice) return;
+    if (quantityInCart >= (mainPrice.stock ?? 0)) {
+      toast.error("Stock de " + product.name + " épuisé");
+      return;
+    }
+    try {
+      setIsCartLoading(true);
+      await updateQuantity(mainPrice.idPrice, 1);
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
+
+  const handleDecrement = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!mainPrice) return;
+    try {
+      setIsCartLoading(true);
+      await updateQuantity(mainPrice.idPrice, -1);
+    } catch (error) {
+      toast.error("Erreur");
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
+
+  return (
+    <div className="bg-app-surface h-[calc(100vh-80px)] lg:h-[calc(100vh-90px)] overflow-hidden font-sans text-app-primary">
+      <main className="w-full max-w-[1600px] mx-auto px-1.5 sm:px-4 md:px-8 py-2.5 md:py-6 h-full">
+
+        <div className="flex flex-col lg:flex-row gap-3 lg:gap-8 items-stretch h-full overflow-hidden">
 
           {/* =========================================
-              COLONNE DE GAUCHE — TOTALEMENT FIXE
+              MOBILE HEADER — TOP PRODUCT CARD (lg:hidden)
           ========================================= */}
-          {/* Sur Desktop (lg), la colonne prend 100% de la hauteur dispo (h-full) et masque ce qui dépasse (overflow-hidden) */}
-          <div className="w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 flex flex-col gap-4 lg:h-full lg:overflow-hidden pb-4">
+          {mainPrice && (
+            <div className="lg:hidden flex-shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm shadow-black/[0.02] flex flex-col overflow-hidden">
+              <div className="p-2.5 flex gap-3">
+                {/* Image à gauche */}
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-[#F8F9FB] border border-dashed border-neutral-200 overflow-hidden shrink-0 flex items-center justify-center p-1.5">
+                  {product.imageUrl ? (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      className="object-cover mix-blend-multiply p-1"
+                    />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-app-secondary/30" />
+                  )}
+                  {mainPrice.inPromotion && (
+                    <div className="absolute top-1 left-1 bg-red-500 text-white px-1.5 py-0.5 rounded text-[8px] sm:text-[9px] font-bold z-10 shadow-sm animate-pulse">
+                      -{mainPrice.taux}%
+                    </div>
+                  )}
+                </div>
+
+                {/* Éléments à droite */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    {/* Boutique et Rating */}
+                    <div className="flex items-center justify-between gap-2 mb-0.5">
+                      <button
+                        onClick={() => setShowStoreDetails(!showStoreDetails)}
+                        className="flex items-center text-[10px] font-bold text-app-accent bg-app-accent/5 px-2 py-0.5 rounded-full hover:bg-app-accent/10 transition-colors cursor-pointer shrink-0 max-w-[70%]"
+                      >
+                        <Store className="h-3 w-3 mr-1 shrink-0" />
+                        <span className="truncate">{storeDetail.name}</span>
+                        <Info className="h-2.5 w-2.5 ml-1 shrink-0 opacity-70" />
+                      </button>
+                      <span className="flex items-center gap-0.5 bg-[#F8F9FB] px-1.5 py-0.5 rounded text-[9px] text-amber-500 font-bold shrink-0">
+                        ⭐ {storeDetail.averageRating?.toFixed(1) || 'N/A'}
+                      </span>
+                    </div>
+
+                    {/* Nom du produit */}
+                    <h2 className="text-xs sm:text-sm font-extrabold text-app-primary line-clamp-1 leading-snug">
+                      {product.name}
+                    </h2>
+
+                    {/* Description courte */}
+                    <p className="text-[10px] sm:text-[11px] text-app-secondary/80 line-clamp-1 leading-relaxed mt-0.5">
+                      {product.description || "Aucune description disponible pour ce produit."}
+                    </p>
+                  </div>
+
+                  {/* Stock et Distance */}
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <div className="flex items-center gap-1 text-[10px] text-app-secondary">
+                      <Package className="h-2.5 w-2.5 text-app-accent" />
+                      <span className={mainPrice.stock <= 0 ? 'text-red-500 font-semibold' : ''}>
+                        {mainPrice.stock <= 0 ? 'Rupture' : `${mainPrice.stock} dispo`}
+                      </span>
+                    </div>
+
+                    {/* Distance */}
+                    <div className="flex items-center gap-1 text-[10px] text-app-secondary bg-gray-50 px-1.5 py-0.5 rounded">
+                      <MapPin className="h-2.5 w-2.5 text-app-secondary" />
+                      <span>{getDistanceLabel()}</span>
+                    </div>
+                  </div>
+
+                  {/* Prix et Bouton Ajouter */}
+                  <div className="flex items-center justify-between border-t border-gray-50 pt-1.5 mt-1">
+                    {/* Prix */}
+                    <div className="flex flex-col">
+                      {mainPrice.inPromotion ? (
+                        <>
+                          <span className="text-[8px] sm:text-[9px] text-app-secondary line-through leading-none mb-0.5">
+                            {Number(mainPrice.price)} Fcfa
+                          </span>
+                          <span className="text-xs sm:text-sm font-extrabold text-app-accent">
+                            {Number(mainPrice.pricePromo)} Fcfa
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xs sm:text-sm font-extrabold text-app-primary">
+                          {Number(mainPrice.price)} Fcfa
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action Cart */}
+                    <div className="flex-shrink-0">
+                      {isCartLoading ? (
+                        <div className="flex items-center justify-center h-6 sm:h-7.5 px-2">
+                          <Loader2 className="w-3.5 h-3.5 text-app-accent animate-spin" />
+                        </div>
+                      ) : mainPrice.stock <= 0 ? (
+                        <span className="inline-flex items-center justify-center h-6 sm:h-7 px-2.5 rounded-full bg-gray-100 text-[9px] sm:text-[10px] font-semibold text-gray-400 cursor-not-allowed">
+                          Rupture
+                        </span>
+                      ) : quantityInCart === 0 ? (
+                        <button
+                          onClick={handleAddToCart}
+                          className="inline-flex items-center justify-center h-6 sm:h-7 rounded-full bg-app-primary px-3 text-[9px] sm:text-[10px] font-bold text-white transition-all duration-300 hover:bg-app-accent cursor-pointer shadow-sm"
+                        >
+                          Ajouter
+                        </button>
+                      ) : (
+                        <div className="inline-flex items-center h-6 sm:h-7 rounded-full bg-app-accent text-white shadow-sm overflow-hidden border border-app-accent">
+                          <button
+                            onClick={handleDecrement}
+                            className="px-2 h-full hover:bg-black/10 transition-colors flex items-center justify-center text-xs font-bold cursor-pointer"
+                          >
+                            -
+                          </button>
+                          <span className="px-1 text-[9px] sm:text-[10px] font-bold min-w-[12px] text-center">
+                            {quantityInCart}
+                          </span>
+                          <button
+                            onClick={handleIncrement}
+                            className="px-2 h-full transition-colors flex items-center justify-center text-xs font-bold hover:bg-black/10 cursor-pointer"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Accordéon Détails de la Boutique */}
+              {showStoreDetails && (
+                <div className="border-t border-gray-100 bg-[#F8F9FB] px-3.5 py-3 flex flex-col gap-2.5 text-xs animate-fadeIn transition-all duration-300">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-app-secondary uppercase tracking-wider">
+                      Infos Boutique
+                    </span>
+                    <span className={`h-1.5 w-1.5 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-400'}`}></span>
+                    <span className={`text-[10px] font-semibold ${isOpen ? 'text-green-600' : 'text-red-500'}`}>
+                      {isOpen ? 'Ouvert' : 'Fermé'}
+                    </span>
+                    <X className="h-4 w-4 text-black ml-40 cursor-pointer" onClick={() => setShowStoreDetails(false)} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-app-accent flex-shrink-0 mt-0.5" />
+                      <div className="min-w-0">
+                        <span className="font-semibold text-app-primary block truncate">
+                          {storeDetail.quartier || "Quartier non renseigné"}
+                        </span>
+                        <span className="text-app-secondary block truncate">
+                          {storeDetail.ville || "Ville non renseignée"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-app-accent flex-shrink-0" />
+                      <a href={`tel:${storeDetail.telephone}`} className="font-semibold text-app-accent hover:underline truncate">
+                        {storeDetail.telephone || "Non disponible"}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* =========================================
+              COLONNE DE GAUCHE — TOTALEMENT FIXE (Desktop - lg:flex)
+          ========================================= */}
+          <div className="hidden lg:flex lg:w-[320px] xl:w-[360px] flex-shrink-0 flex-col gap-4 lg:h-full lg:overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
             {/* 1. PRODUIT PRINCIPAL */}
             {mainPrice && (
@@ -164,7 +400,7 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100/80 hidden xl:block">
+                <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100/80">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <AlignLeft className="h-3.5 w-3.5 text-app-secondary" />
                     <span className="text-[11px] font-bold text-app-secondary uppercase tracking-wide">Description</span>
@@ -229,31 +465,73 @@ export default function QuincaillerieDetailsPage({ params }: { params: Promise<{
           {/* =========================================
               COLONNE DE DROITE : RECOMMANDATIONS (SCROLLABLE INDÉPENDANT)
           ========================================= */}
-          {/* h-full + overflow-y-auto crée la zone de scroll interne */}
-          <div className="flex-1 min-w-0 h-full overflow-y-auto scrollbar-none pb-12 relative rounded-xl">
+          <div className="flex-1 min-w-0 lg:h-full overflow-y-auto pb-12 relative rounded-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
             {/* EN-TÊTE COLLANT (STICKY) DANS LA ZONE SCROLLABLE */}
-            {/* L'arrière plan bg-app-surface empêche les produits de se voir derrière la barre quand on scroll */}
-            <div className="sticky top-0 z-20 bg-app-surface pb-4 pt-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm shadow-black/[0.02]">
-                <div className="flex items-center gap-2.5 pl-1">
-                  <h3 className="text-[15px] font-bold text-app-primary tracking-tight">
-                    {searchTerm ? 'Résultats de recherche' : 'Mes recommandations'}
+            <div className="sticky top-0 z-20 bg-app-surface pb-3 pt-1">
+              <div className="flex items-center justify-between gap-2 bg-white px-3 py-2 rounded-2xl border border-gray-100 shadow-sm shadow-black/[0.02] h-12">
+
+                {/* Titre et Nombre */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <h3 className={`font-extrabold text-app-primary tracking-tight transition-all duration-300 whitespace-nowrap ${isSearchExpanded ? 'text-xs max-w-[85px] truncate' : 'text-sm'
+                    } sm:text-[15px]`}>
+                    {searchTerm ? 'Résultats' : 'Mes recommandations'}
                   </h3>
-                  <span className="text-[11px] text-app-secondary font-bold bg-gray-100 px-2.5 py-1 rounded-full">
-                    {filteredRecommendations.length}
-                  </span>
+                  {!isSearchExpanded && (
+                    <span className="text-[10px] sm:text-[11px] text-app-secondary font-bold bg-gray-100 px-2 py-0.5 rounded-full">
+                      {filteredRecommendations.length}
+                    </span>
+                  )}
                 </div>
 
-                <div className="relative w-full sm:w-[300px]">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Rechercher un produit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-100 text-app-primary text-sm font-medium rounded-full focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent focus:bg-white block pl-10 pr-4 py-2.5 transition-all outline-none placeholder:font-normal placeholder:text-gray-400"
-                  />
+                {/* Barre de recherche responsive */}
+                <div className="flex-1 flex justify-end items-center min-w-0 pl-2">
+
+                  {/* Version Mobile / Tablette (Sous lg) */}
+                  <div className="flex lg:hidden items-center justify-end w-full">
+                    {isSearchExpanded ? (
+                      <div className="relative w-full flex items-center">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Rechercher..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          autoFocus
+                          className="w-full bg-gray-50 border border-gray-100 text-app-primary text-xs font-semibold rounded-full focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent focus:bg-white block pl-9 pr-16 py-1.5 transition-all outline-none"
+                        />
+                        <button
+                          onClick={() => {
+                            setIsSearchExpanded(false);
+                            setSearchTerm("");
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-app-accent text-[10px] font-bold hover:opacity-80 cursor-pointer"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsSearchExpanded(true)}
+                        className="w-8 h-8 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center hover:bg-gray-100 text-app-secondary transition-all cursor-pointer"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Version Desktop (lg et plus) */}
+                  <div className="hidden lg:relative lg:block lg:w-[260px] xl:w-[320px]">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher un produit..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-100 text-app-primary text-sm font-medium rounded-full focus:ring-2 focus:ring-app-accent/30 focus:border-app-accent focus:bg-white block pl-10 pr-4 py-2 transition-all outline-none placeholder:text-gray-400"
+                    />
+                  </div>
+
                 </div>
               </div>
             </div>

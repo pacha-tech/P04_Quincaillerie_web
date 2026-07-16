@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { 
   ChevronLeft, Trash2, MessageSquare, Minus, Plus, Zap, 
-  AlertTriangle, Loader2, ShoppingBag, Clock, Store, ArrowRight
+  AlertTriangle, Loader2, ShoppingBag, Clock, Store, ArrowRight ,
 } from 'lucide-react';
 import { commandeService } from '@/src/services/CommandeService';
 import { CommandeResponse } from '@/src/types/CommandeResponse';

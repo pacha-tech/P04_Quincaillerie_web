@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCart } from '@/src/hooks/CartContext';
 import { useLocation } from '@/src/hooks/LocationContext';
+import { useAuth } from '@/src/hooks/AuthContext';
 import { calculateDistance } from '@/src/utils/Distance';
 import toast from 'react-hot-toast';
 import {
@@ -48,6 +49,7 @@ export default function ProductCard({
   hideCartActions = false
 }: ProductCardProps) {
   const { items, addToCart, updateQuantity } = useCart();
+  const { role } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { latitude: userLat, longitude: userLng } = useLocation();
@@ -70,6 +72,12 @@ export default function ProductCard({
   };
 
   const handleViewProduct = () => {
+    if (role === "VISITEUR") {
+      toast.error("Veuillez vous connecter pour voir les détails de ce produit.");
+      router.push('/login');
+      return;
+    }
+
     const productData = {
       idPrice,
       idQuincaillerie,
@@ -99,6 +107,11 @@ export default function ProductCard({
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (role === "VISITEUR") {
+      toast.error("Veuillez vous connecter pour ajouter des articles au panier.");
+      router.push('/login');
+      return;
+    }
     if (stock <= 0) { toast.error("Stock de " + name + " épuisé"); return; }
     try {
       setIsLoading(true);
@@ -112,6 +125,11 @@ export default function ProductCard({
 
   const handleIncrement = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (role === "VISITEUR") {
+      toast.error("Veuillez vous connecter pour modifier le panier.");
+      router.push('/login');
+      return;
+    }
     if (quantityInCart >= stock) { toast.error("Stock de " + name + " épuisé"); return; }
     try {
       setIsLoading(true);
@@ -123,6 +141,11 @@ export default function ProductCard({
 
   const handleDecrement = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
+    if (role === "VISITEUR") {
+      toast.error("Veuillez vous connecter pour modifier le panier.");
+      router.push('/login');
+      return;
+    }
     try {
       setIsLoading(true);
       await updateQuantity(idPrice, -1);

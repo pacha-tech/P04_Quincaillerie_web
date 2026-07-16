@@ -7,11 +7,11 @@ import { getMenuByRole } from '@/src/constant/menuConfig';
 import { UserRole } from '@/src/types/auth';
 import {
   Menu, X, Home, ShoppingCart, Heart, User, Settings, Box,
-  TrendingUp, BarChart2, Store, Info, Mail, LogOut, ScrollText, LayoutDashboard, Tag , History,MessageSquare
+  TrendingUp, BarChart2, Store, Info, Mail, LogOut, ScrollText, LayoutDashboard, Tag, History, MessageSquare
 } from 'lucide-react';
 import { LocationProvider } from '@/src/hooks/LocationContext';
-import { useAuth } from '@/src/hooks/AuthContext'; 
-import { useCart } from '@/src/hooks/CartContext'; 
+import { useAuth } from '@/src/hooks/AuthContext';
+import { useCart } from '@/src/hooks/CartContext';
 import LogoutModal from './LogoutModal';
 import { useCommande } from '@/src/hooks/CommandeContext';
 
@@ -33,7 +33,7 @@ const ICON_MAP: Record<string, React.FC<{ size?: number; className?: string; str
   logOut: (props) => <LogOut {...props} />,
   logs: (props) => <ScrollText {...props} />,
   history: (props) => <History {...props} />,
-  messageSquare: (props) => < MessageSquare {...props}/>
+  messageSquare: (props) => < MessageSquare {...props} />
 };
 
 interface SideBarProps {
@@ -44,14 +44,14 @@ interface SideBarProps {
 export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
   const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  
+
   const { role, logout } = useAuth();
-  const { items } = useCart(); 
+  const { items } = useCart();
   const { count } = useCommande();
 
   const activeRole = (role || "VISITEUR") as UserRole;
   const menuItems = getMenuByRole(activeRole);
-  
+
   const uniqueStoresCount = new Set(items.map(item => item.idQuincaillerie)).size;
 
   useEffect(() => {
@@ -90,21 +90,21 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
           md:translate-x-0 md:shadow-none
         `}
       >
-        
+
         {/* Header de la Sidebar */}
         <div className="pt-8 pb-6 px-6 relative">
-          <button 
+          <button
             onClick={closeSidebar}
             className="md:hidden absolute top-4 right-4 p-2.5 text-app-secondary hover:text-app-primary bg-app-surface rounded-full cursor-pointer transition-colors"
           >
             <X size={24} />
           </button>
 
-          <div className="flex items-center gap-3 mt-2 md:mt-0">
-            <div className="flex flex-shrink-0 items-center justify-center w-12 h-12 md:w-10 md:h-10 rounded-xl bg-black text-white font-black text-xl md:text-lg shadow-lg shadow-black/10">
-              BX
+          <div className="flex items-center mt-2 md:mt-0">
+            <div className="flex flex-shrink-0 items-center justify-center w-14 h-14 md:w-20 md:h-20">
+              <img src="/logo.png" alt="BX Logo" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-app-primary flex items-center gap-2">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-app-primary flex items-center gap-1">
               Brixel
               <span className="text-xs font-bold bg-app-surface px-2.5 py-1 rounded-full text-app-secondary mt-1">v1.0</span>
             </h1>
@@ -115,7 +115,7 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto scrollbar-hide pb-4">
           {menuItems.map((item) => {
             const isActive = pathname === item.href;
-            
+
             return (
               <Link
                 key={item.id}
@@ -125,8 +125,8 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
                 }}
                 className={`
                   relative flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group overflow-hidden
-                  ${isActive 
-                    ? 'bg-app-accent/10 text-app-accent font-bold' 
+                  ${isActive
+                    ? 'bg-app-accent/10 text-app-accent font-bold'
                     : 'text-app-secondary font-semibold hover:bg-app-surface/50 hover:text-app-primary'
                   }
                 `}
@@ -137,7 +137,7 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
 
                 <span className="relative text-xl group-hover:scale-110 transition-transform duration-200">
                   {renderIcon(item.icon)}
-                  
+
                   {/* Badges repensés pour être plus visibles */}
                   {item.icon === 'shopping-cart' && uniqueStoresCount > 0 && (
                     <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white ring-2 ring-app-card shadow-sm">
@@ -171,12 +171,12 @@ export default function SideBar({ isOpen, setIsOpen }: SideBarProps) {
           </button>
         </div>
       </aside>
-      
+
       {/* Modal de Confirmation */}
-      <LogoutModal 
-        isOpen={showLogoutModal} 
-        onClose={() => setShowLogoutModal(false)} 
-        onConfirm={handleLogout} 
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
       />
     </LocationProvider>
   );

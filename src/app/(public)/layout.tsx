@@ -7,19 +7,27 @@ import GuestGuard from "@/src/components/ui/GuestGuard";
 import { CartProvider } from "@/src/hooks/CartContext";
 import SearchBar from "@/src/components/ui/client/SearchBar";
 
+import { usePathname } from "next/navigation";
+
 export default function BoutiqueLayout({ children }: { children: React.ReactNode }) {
   const { latitude, longitude, loading: locationLoading, error: locationError, requestLocation } = useLocation();
+  const pathname = usePathname();
+
+  if (pathname === "/") {
+    return <GuestGuard>{children}</GuestGuard>;
+  }
   
   return (
-    <GuestGuard>
+    <CartProvider>
+      <GuestGuard>
       <div className="flex flex-col min-h-screen bg-app-surface font-sans text-app-primary selection:bg-app-accent/20">
         
         <header className="sticky top-0 z-50 h-20 bg-app-surface/80 backdrop-blur-md border-b border-app-primary/5 flex items-center justify-between px-4 md:px-8 transition-all">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 mr-4 md:mr-8 group">
-            <div className="w-10 h-10 bg-app-primary rounded-xl flex items-center justify-center shadow-md transform rotate-3 group-hover:rotate-0 transition-transform duration-300">
-              <span className="text-white text-lg font-bold -rotate-3 group-hover:rotate-0 transition-transform duration-300">BX</span>
+          <Link href="/" className="flex items-center gap-1.5 mr-4 md:mr-8 group">
+            <div className="w-20 h-20 transform group-hover:scale-105 transition-all duration-300">
+              <img src="/logo.png" alt="BX Logo" className="w-full h-full object-contain" />
             </div>
             <span className="hidden sm:block text-xl font-black tracking-tight text-app-primary">
               Brixel
@@ -78,5 +86,6 @@ export default function BoutiqueLayout({ children }: { children: React.ReactNode
       
       </div>  
     </GuestGuard>
+    </CartProvider>
   );
 }

@@ -12,19 +12,20 @@ import { signInWithCustomToken } from 'firebase/auth';
 import { authentification } from '@/src/config/firebase';
 import { useAuth } from '@/src/hooks/AuthContext';
 import toast from 'react-hot-toast';
+import AuthLayout from '@/src/components/ui/AuthLayout';
 
 export default function SignUpPage() {
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
+
   const [selectedImage, setSelectedImage] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const {login} = useAuth();
+  const { login } = useAuth();
 
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,20 +65,19 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     const data: RegisterCustomerDTO = {
-        name: formData.name.trim(),
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        role: "CLIENT"
+      name: formData.name.trim(),
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      role: "CLIENT"
     }
 
     try {
 
       const response = await userService.registerCustomer(data, selectedImage);
-      
-      
-      const customToken = response.token; 
-      console.log("Le token est:",customToken);
+
+      const customToken = response.token;
+      console.log("Le token est:", customToken);
 
       if (!customToken) {
         throw new Error("Le serveur n'a pas renvoyé de token d'authentification.");
@@ -85,42 +85,20 @@ export default function SignUpPage() {
 
       console.log("On tente de s'auto loger");
       const userCredential = await signInWithCustomToken(authentification, customToken);
-      
-      
+
       const idTokenResult = await userCredential.user.getIdTokenResult();
       const token = idTokenResult.token;
-      
-      const role = idTokenResult.claims.role;
-      console.log("Le role est: ",role);
 
-      
+      const role = idTokenResult.claims.role;
+      console.log("Le role est: ", role);
+
       localStorage.setItem('firebase_token', token);
       login(role as UserRole);
 
-      /*
-      // 5. Message de succès
-      await Swal.fire({
-        icon: 'success',
-        title: `Bienvenue ${formData.name} !`,
-        text: 'Votre compte a été créé avec succès.',
-        confirmButtonText: "Accéder à mon espace",
-        confirmButtonColor: '#00897B',
-        allowOutsideClick: false,
-      });
-      */
-     toast.success(`Bienvenue ${formData.name}`);
-      // 6. Redirection
+      toast.success(`Bienvenue ${formData.name}`);
       router.push('/client');
-      
+
     } catch (error: any) {
-      /*
-      Swal.fire({
-        icon: 'error',
-        title: 'Oups !',
-        text: error.response?.data?.message || error.message || "Une erreur s'est produite lors de l'inscription.",
-        confirmButtonColor: '#E53935',
-      });
-      */
       toast.error(error.message);
     } finally {
       setIsLoading(false);
@@ -128,22 +106,38 @@ export default function SignUpPage() {
   };
 
   return (
-    
-    <div className="min-h-[100dvh] bg-app-surface flex items-center justify-center p-4 py-8 relative">
-      {isLoading && <div className="absolute inset-0 z-50 bg-black/5 flex items-center justify-center cursor-not-allowed" />}
-      
-      {/* MODIF ICI : my-auto pour centrer si la hauteur le permet, margin top/bottom automatique sinon */}
-      <main className="bg-white w-full max-w-md rounded-2xl md:rounded-3xl shadow-xl p-5 sm:p-6 md:p-8 relative">
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-5 md:space-y-6 mt-2 md:mt-4">
-          
+    <AuthLayout>
+      <main className="bg-white w-full max-w-md rounded-2xl md:rounded-3xl shadow-xl p-5 sm:p-6 md:p-8 border border-gray-100/50 relative">
+        {isLoading && <div className="absolute inset-0 z-50 bg-black/5 rounded-2xl md:rounded-3xl flex items-center justify-center cursor-not-allowed" />}
+
+        {/* Toggle type de compte */}
+        <div className="flex justify-center w-full mb-6">
+          <div className="inline-flex p-1 bg-gray-100 rounded-xl w-full">
+            <button
+              type="button"
+              className="flex-1 text-center py-2 rounded-lg text-xs md:text-sm font-extrabold transition-all duration-300 bg-white text-[#1A1A2E] shadow-sm cursor-default"
+            >
+              Compte Client
+            </button>
+            <Link
+              href="/signup/vendeur"
+              className="flex-1 text-center py-2 rounded-lg text-xs md:text-sm font-bold transition-all duration-300 text-gray-500 hover:text-gray-900 flex items-center justify-center"
+            >
+              Compte Vendeur
+            </Link>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-5 md:space-y-6">
+
           {/* SÉLECTEUR D'IMAGE */}
           <div className="flex justify-center">
             <div className="relative cursor-pointer group" onClick={triggerFileInput}>
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImagePick} className="hidden" />
-              <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-app-primary/20 bg-app-primary/5 flex items-center justify-center overflow-hidden transition-transform ${isLoading ? '' : 'group-hover:scale-105'}`}>
-                {previewUrl ? <img src={previewUrl} alt="Avatar" className="w-full h-full object-cover" /> : <User size={36} className="text-app-primary md:w-10 md:h-10" />}
+              <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 border-[#E94560]/20 bg-[#E94560]/5 flex items-center justify-center overflow-hidden transition-transform ${isLoading ? '' : 'group-hover:scale-105'}`}>
+                {previewUrl ? <img src={previewUrl} alt="Avatar" className="w-full h-full object-cover" /> : <User size={36} className="text-[#E94560] md:w-10 md:h-10" />}
               </div>
-              <div className={`absolute bottom-0 right-0 w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white flex items-center justify-center ${isLoading ? 'bg-gray-400' : 'bg-app-primary'}`}>
+              <div className={`absolute bottom-0 right-0 w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white flex items-center justify-center ${isLoading ? 'bg-gray-400' : 'bg-[#E94560]'}`}>
                 <Camera size={14} className="text-white" />
               </div>
             </div>
@@ -156,32 +150,32 @@ export default function SignUpPage() {
 
           <div className={`space-y-3 md:space-y-4 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}>
             <div>
-              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-app-primary focus-within:bg-white transition-all ${errors.name ? 'border-red-500' : 'border-transparent'}`}>
-                <User size={18} className="text-app-primary mr-2 md:mr-3 shrink-0" />
+              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#E94560] focus-within:bg-white transition-all ${errors.name ? 'border-red-500' : 'border-transparent'}`}>
+                <User size={18} className="text-[#E94560] mr-2 md:mr-3 shrink-0" />
                 <input type="text" name="name" placeholder="Nom complet" value={formData.name} onChange={handleChange} className="bg-transparent w-full outline-none text-app-text-primary placeholder:text-gray-400 text-sm md:text-base" />
               </div>
               {errors.name && <p className="text-red-500 text-xs mt-1 ml-1">{errors.name}</p>}
             </div>
 
             <div>
-              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-app-primary focus-within:bg-white transition-all ${errors.email ? 'border-red-500' : 'border-transparent'}`}>
-                <Mail size={18} className="text-app-primary mr-2 md:mr-3 shrink-0" />
+              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#E94560] focus-within:bg-white transition-all ${errors.email ? 'border-red-500' : 'border-transparent'}`}>
+                <Mail size={18} className="text-[#E94560] mr-2 md:mr-3 shrink-0" />
                 <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="bg-transparent w-full outline-none text-app-text-primary placeholder:text-gray-400 text-sm md:text-base" />
               </div>
               {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
             </div>
 
             <div>
-              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-app-primary focus-within:bg-white transition-all ${errors.phone ? 'border-red-500' : 'border-transparent'}`}>
-                <Phone size={18} className="text-app-primary mr-2 md:mr-3 shrink-0" />
+              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#E94560] focus-within:bg-white transition-all ${errors.phone ? 'border-red-500' : 'border-transparent'}`}>
+                <Phone size={18} className="text-[#E94560] mr-2 md:mr-3 shrink-0" />
                 <input type="tel" name="phone" placeholder="Téléphone (ex: 6XXXXXXXX)" value={formData.phone} onChange={handleChange} className="bg-transparent w-full outline-none text-app-text-primary placeholder:text-gray-400 text-sm md:text-base" />
               </div>
               {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone}</p>}
             </div>
 
             <div>
-              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-app-primary focus-within:bg-white transition-all ${errors.password ? 'border-red-500' : 'border-transparent'}`}>
-                <Lock size={18} className="text-app-primary mr-2 md:mr-3 shrink-0" />
+              <div className={`flex items-center bg-app-surface border rounded-xl px-3 py-2.5 md:px-4 md:py-3 focus-within:border-[#E94560] focus-within:bg-white transition-all ${errors.password ? 'border-red-500' : 'border-transparent'}`}>
+                <Lock size={18} className="text-[#E94560] mr-2 md:mr-3 shrink-0" />
                 <input type={showPassword ? "text" : "password"} name="password" placeholder="Mot de passe" value={formData.password} onChange={handleChange} className="bg-transparent w-full outline-none text-app-text-primary placeholder:text-gray-400 text-sm md:text-base" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 focus:outline-none p-1">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -191,7 +185,7 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          <button type="submit" disabled={isLoading} className="w-full h-11 md:h-12 mt-2 bg-app-primary text-white rounded-xl font-bold text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-all hover:bg-app-primary/90 shadow-md cursor-pointer">
+          <button type="submit" disabled={isLoading} className="w-full h-11 md:h-12 mt-2 bg-[#1A1A2E] hover:bg-[#252542] text-white rounded-xl font-bold text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center transition-all shadow-md cursor-pointer">
             {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "S'INSCRIRE"}
           </button>
 
@@ -199,15 +193,12 @@ export default function SignUpPage() {
             <div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-1 mt-2 text-xs md:text-sm">
                 <span className="text-gray-500">Déjà un compte ?</span>
-                <Link href="/login" className="text-app-primary font-bold hover:underline p-1">Connectez-vous</Link>
-              </div>
-              <div className='flex flex-row items-center justify-center'>
-                <Link href="/signup/vendeur" className='underline font-bold'>Ou creer un Compte Vendeur</Link>
+                <Link href="/login" className="text-[#E94560] font-bold hover:underline p-1">Connectez-vous</Link>
               </div>
             </div>
           )}
         </form>
       </main>
-    </div>
+    </AuthLayout>
   );
 }
