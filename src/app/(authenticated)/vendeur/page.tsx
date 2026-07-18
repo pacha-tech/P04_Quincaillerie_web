@@ -195,7 +195,7 @@ export default function DashboardVendeur() {
       {/* --- EN-TÊTE --- */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-app-primary tracking-tight">Bonjour, Vendeur 👋</h1>
+          {/* <h1 className="text-2xl md:text-3xl font-black text-app-primary tracking-tight">Bonjour, Vendeur 👋</h1> */}
           <p className="text-sm text-app-secondary mt-1">Voici ce qui se passe dans votre boutique aujourd'hui.</p>
         </div>
 

@@ -41,11 +41,19 @@ const SLIDES = [
     ctaLink: "/visiteur"
   },
   {
-    image: "/hero_construction_engineers.png",
+    image: "/hero_construction_tools1.png",
     tagline: "Logistique & Paiement Faciles",
     title: "Creer un compte en quelques clics pour Commandez et payez par Mobile Money & Orange Money",
     description: "Payez en toute sécurité via Orange Money ou MTN Mobile Money, puis récupérez vos articles en magasin ou faites-vous livrer directement sur le chantier.",
-    ctaText: "Faire un achat test",
+    ctaText: "Explorer en mode visiteur",
+    ctaLink: "/visiteur"
+  },
+  {
+    image: "/hero_construction_tools2.png",
+    tagline: "Management Faciles",
+    title: "Gerer facilement vos stocks, vos commandes et vos promotions",
+    description: "Inserer des produits , faire une promotion , consulter vos statistiques, valider les commandes en quelques clics",
+    ctaText: "Explorer en mode visiteur",
     ctaLink: "/visiteur"
   }
 ];
